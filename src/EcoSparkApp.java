@@ -4,8 +4,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class EcoSparkApp extends JFrame {
@@ -26,7 +24,7 @@ public class EcoSparkApp extends JFrame {
     // Login Panels
     private JPanel loginPanel;
     private JPanel registerPanel;
-    private JPanel dashboardPanel;
+    JPanel dashboardPanel;
     private JPanel profilePanel;
     private JPanel tasksPanel;
     private JPanel carbonFootprintPanel;
@@ -47,10 +45,6 @@ public class EcoSparkApp extends JFrame {
 
     public EcoSparkApp() {
         model = new ApplicationModel();
-
-        // For testing, create a default user
-        Profile defaultUser = new Profile("Test User", "test@example.com", "test");
-        model.setCurrentUser(defaultUser);
 
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -84,13 +78,8 @@ public class EcoSparkApp extends JFrame {
         setVisible(true);
     }
 
-    private void initializeUI() {
-
-        // Create the main dashboard panel
-        DashboardPanel dashboardPanel = new DashboardPanel(model);
-
-        dashboardFrame.getContentPane().add(dashboardPanel);
-        dashboardFrame.setVisible(true);
+    private boolean isUserLoggedIn() {
+        return currentUser != null;
     }
 
     private void createCarbonFootprintPanel() {
@@ -143,7 +132,6 @@ public class EcoSparkApp extends JFrame {
         carbonFootprintPanel.add(tabbedPane);
         tabbedPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
 
-
         // Submit button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
@@ -182,7 +170,6 @@ public class EcoSparkApp extends JFrame {
             }
         });
 
-        // Add the scroll pane to the content pane
         getContentPane().add(carbonScrollPane);
         setVisible(true);
     }
@@ -650,6 +637,8 @@ public class EcoSparkApp extends JFrame {
 
             if (userCredentials.containsKey(email) && userCredentials.get(email).equals(password)) {
                 // Set current user
+
+                model.setCurrentUser(currentUser);
                 currentUser = userProfiles.get(email);
                 statusLabel.setText("Login successful!");
                 statusLabel.setForeground(Color.GREEN);
@@ -1263,26 +1252,29 @@ public class EcoSparkApp extends JFrame {
                 "/com/hillcrest/visuals/carbon_footprint_button_graphic.png",
                 "Calculate carbon footprint",
                 e -> {
-                    if (dashboardPanel == null) {
-                        dashboardPanel = new DashboardPanel(model);
-                    }
+                    if (isUserLoggedIn()) {
+                        // User is logged in, proceed with the action
+                        JFrame dashboardFrame = new JFrame("Dashboard");
+                        dashboardFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        dashboardFrame.setSize(800, 600); // Adjust size as needed
 
-                    // If you're using CardLayout for navigation
-                    if (cardLayout != null && frame != null) {
-                        cardLayout.show(frame, "dashboard");
-                    } else {
-                        // Alternative approach: create and show a new dashboard window
-                        if (dashboardFrame == null) {
-                            dashboardFrame = new JFrame("EcoSpark Dashboard");
-                            dashboardFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                            dashboardFrame.setSize(900, 700);
-                            dashboardFrame.setLocationRelativeTo(null);
-                            dashboardFrame.getContentPane().add(dashboardPanel);
-                        }
+                        // Pass the model and currentUser to the DashboardPanel
+                        DashboardPanel dashboardPanel = new DashboardPanel(model, currentUser);
+                        dashboardFrame.add(dashboardPanel);
+
+                        dashboardFrame.setLocationRelativeTo(null); // Center the window
                         dashboardFrame.setVisible(true);
+                    } else {
+                        // User is not logged in, show a login prompt
+                        JOptionPane.showMessageDialog(null,
+                                "Please log in to calculate your carbon footprint.",
+                                "Login Required",
+                                JOptionPane.INFORMATION_MESSAGE);
+                        createLoginPanel();
                     }
                 }
         );
+
 
         JPanel quizButton = createImageButton(
                 "/com/hillcrest/visuals/informative_resources_button_graphic.png",
@@ -1293,7 +1285,18 @@ public class EcoSparkApp extends JFrame {
         JPanel actionsButton = createImageButton(
                 "/com/hillcrest/visuals/take_action.png",
                 "Take personalized actions",
-                e -> createCarbonFootprintPanel()
+                e -> {
+                    if (isUserLoggedIn()) {
+                        // User is logged in, show profile edit panel
+                        createCarbonFootprintPanel();
+                    } else {
+                        // User is not logged in, redirect to login
+                        JOptionPane.showMessageDialog(this,
+                                "Please log in to view your profile",
+                                "Login Required",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
         );
 
         // Add buttons to the panel
@@ -1354,9 +1357,6 @@ public class EcoSparkApp extends JFrame {
 
         return panel;
     }
-
-
-
 
     private JPanel createOfferCard(String title, String imagePath, Color backgroundColor) {
         JPanel card = new JPanel();
