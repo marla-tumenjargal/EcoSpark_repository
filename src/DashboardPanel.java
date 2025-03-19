@@ -1,6 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import javax.swing.border.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,27 +21,21 @@ public class DashboardPanel extends JPanel {
     private Color secondaryColor = new Color(240, 240, 240);
     private Color accentColor = new Color(249, 170, 51);
 
-    // Badge definitions with improved colors and icons
     private Map<String, Badge> badgeTypes = new HashMap<>();
 
     public DashboardPanel(ApplicationModel model, Profile currentUser) {
-        this.model = model; // Initialize the model
-        this.taskManager = model.getTaskManager(); // Initialize the taskManager
-        this.currentUser = currentUser; // Initialize the currentUser
+        this.model = model;
+        this.taskManager = model.getTaskManager();
+        this.currentUser = currentUser;
 
-        // Initialize badge types with more colorful and meaningful categories
         initializeBadges();
-
         setLayout(new BorderLayout());
 
-        // Add header
         add(createHeaderPanel(), BorderLayout.NORTH);
 
-        // Create main content panel with card layout
         contentCardLayout = new CardLayout();
         contentPanel = new JPanel(contentCardLayout);
 
-        // Create and add dashboard content
         JPanel dashboardContent = createDashboardContent();
         contentPanel.add(dashboardContent, "dashboard");
 
@@ -670,164 +663,6 @@ public class DashboardPanel extends JPanel {
             return icon;
         }
     }
-
-    // Redesigned badges panel with more room for badges
-//    private JPanel createBadgesPanel() {
-//        badgesPanel = new JPanel();
-//        badgesPanel.setLayout(new BoxLayout(badgesPanel, BoxLayout.Y_AXIS));
-//        badgesPanel.setBackground(Color.WHITE);
-//        badgesPanel.setBorder(BorderFactory.createCompoundBorder(
-//                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-//                BorderFactory.createEmptyBorder(15, 15, 15, 15)
-//        ));
-//
-//        JLabel badgesTitle = new JLabel("Badges");
-//        badgesTitle.setFont(new Font("Arial", Font.BOLD, 22));
-//        badgesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        badgesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-//
-//        badgesPanel.add(badgesTitle);
-//
-//        // Progress info
-//        JLabel progressTitle = new JLabel("Points Progress: " + currentUser.getPoints() + " points");
-//        progressTitle.setFont(new Font("Arial", Font.BOLD, 14));
-//        progressTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        progressTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-//        badgesPanel.add(progressTitle);
-//
-//        // Add progress bar
-//        JProgressBar progressBar = new JProgressBar(0, 320); // Updated to match highest badge requirement
-//        progressBar.setValue(Math.min(currentUser.getPoints(), 320));
-//        progressBar.setStringPainted(true);
-//        progressBar.setString(currentUser.getPoints() + "/320");
-//        progressBar.setForeground(primaryColor);
-//        progressBar.setPreferredSize(new Dimension(0, 20));
-//        progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        badgesPanel.add(progressBar);
-//        badgesPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-//
-//        // Add badge collection in a grid layout (4 columns for more badges)
-//        JLabel allBadgesTitle = new JLabel("Badge Collection:");
-//        allBadgesTitle.setFont(new Font("Arial", Font.BOLD, 16));
-//        allBadgesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        allBadgesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-//        badgesPanel.add(allBadgesTitle);
-//
-//        // Create a grid layout for all badges (4 columns)
-//        JPanel badgeGrid = new JPanel(new GridLayout(0, 4, 10, 10));
-//        badgeGrid.setBackground(Color.WHITE);
-//        badgeGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
-//
-//        // Show all point-based badges (earned or not)
-//        List<String> userBadges = currentUser.getBadges();
-//
-//        // First add all point-based badges
-//        for (Badge badge : badgeTypes.values()) {
-//            if (badge.getPointsRequired() > 0) {
-//                boolean isEarned = userBadges.contains(badge.getName());
-//                JPanel badgePanel = createBadgeButton(badge, isEarned);
-//                badgeGrid.add(badgePanel);
-//            }
-//        }
-//
-//        // Then add environmental focus badges
-//        for (Badge badge : badgeTypes.values()) {
-//            if (badge.getPointsRequired() == 0) {
-//                boolean isEarned = userBadges.contains(badge.getName());
-//                JPanel badgePanel = createBadgeButton(badge, isEarned);
-//                badgeGrid.add(badgePanel);
-//            }
-//        }
-//
-//        JScrollPane badgeScrollPane = new JScrollPane(badgeGrid);
-//        badgeScrollPane.setBorder(BorderFactory.createEmptyBorder());
-//        badgeScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-//        badgeScrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        badgeScrollPane.setPreferredSize(new Dimension(0, 400)); // Much bigger size for badges
-//        badgeScrollPane.getVerticalScrollBar().setUnitIncrement(30); // More sensitive scrolling
-//
-//        badgesPanel.add(badgeScrollPane);
-//        badgesPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-//
-//        // Upcoming badges title
-//        JLabel upcomingBadgesTitle = new JLabel("Next Badges:");
-//        upcomingBadgesTitle.setFont(new Font("Arial", Font.BOLD, 16));
-//        upcomingBadgesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        upcomingBadgesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-//        badgesPanel.add(upcomingBadgesTitle);
-//
-//        // Show upcoming point-based badges
-//        JPanel upcomingBadgesPanel = new JPanel();
-//        upcomingBadgesPanel.setLayout(new BoxLayout(upcomingBadgesPanel, BoxLayout.Y_AXIS));
-//        upcomingBadgesPanel.setBackground(Color.WHITE);
-//        upcomingBadgesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-//
-//        boolean hasUpcomingBadges = false;
-//        for (Badge badge : badgeTypes.values()) {
-//            if (badge.getPointsRequired() > 0 &&
-//                    badge.getPointsRequired() > currentUser.getPoints() &&
-//                    !currentUser.hasBadge(badge.getName())) {
-//
-//                JPanel upcomingBadgeRow = new JPanel(new BorderLayout(10, 5));
-//                upcomingBadgeRow.setBackground(Color.WHITE);
-//                upcomingBadgeRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-//
-//                // Create a more attractive badge icon on the left
-//                JPanel iconContainer = new JPanel(new BorderLayout());
-//                iconContainer.setBackground(Color.WHITE);
-//
-//                JPanel badgeIcon = new RoundedPanel(25, new Color(220, 220, 220));
-//                badgeIcon.setPreferredSize(new Dimension(40, 40));
-//                badgeIcon.setLayout(new GridBagLayout());
-//
-//                JLabel iconLabel = new JLabel("?");
-//                iconLabel.setFont(new Font("Arial", Font.BOLD, 20));
-//                iconLabel.setForeground(Color.WHITE);
-//                badgeIcon.add(iconLabel);
-//
-//                iconContainer.add(badgeIcon, BorderLayout.CENTER);
-//                upcomingBadgeRow.add(iconContainer, BorderLayout.WEST);
-//
-//                // Badge info and progress in the center
-//                JPanel infoPanel = new JPanel();
-//                infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-//                infoPanel.setBackground(Color.WHITE);
-//
-//                JLabel badgeLabel = new JLabel(badge.getName() + " (" + badge.getPointsRequired() + " pts) " + badge.getIcon());
-//                badgeLabel.setFont(new Font("Arial", Font.BOLD, 14));
-//                badgeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-//                infoPanel.add(badgeLabel);
-//                infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-//
-//                JProgressBar badgeProgress = new JProgressBar(0, badge.getPointsRequired());
-//                badgeProgress.setValue(currentUser.getPoints());
-//                badgeProgress.setStringPainted(true);
-//                badgeProgress.setString(currentUser.getPoints() + "/" + badge.getPointsRequired());
-//                badgeProgress.setForeground(badge.getColor());
-//                badgeProgress.setAlignmentX(Component.LEFT_ALIGNMENT);
-//                infoPanel.add(badgeProgress);
-//
-//                upcomingBadgeRow.add(infoPanel, BorderLayout.CENTER);
-//                upcomingBadgesPanel.add(upcomingBadgeRow);
-//                upcomingBadgesPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-//
-//                hasUpcomingBadges = true;
-//
-//                // Show the next 3 badges to earn
-//                if (upcomingBadgesPanel.getComponentCount() >= 6) break; // 3 badges + 3 spacers
-//            }
-//        }
-//
-//        if (!hasUpcomingBadges) {
-//            JLabel allBadgesLabel = new JLabel("You've earned all point-based badges! 🎉");
-//            allBadgesLabel.setFont(new Font("Arial", Font.ITALIC, 14));
-//            upcomingBadgesPanel.add(allBadgesLabel);
-//        }
-//
-//        badgesPanel.add(upcomingBadgesPanel);
-//
-//        return badgesPanel;
-//    }
 
     private JPanel createBadgesPanel() {
         badgesPanel = new JPanel();

@@ -1,9 +1,11 @@
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 
 public class EcoSparkApp extends JFrame {
@@ -1014,139 +1016,6 @@ public class EcoSparkApp extends JFrame {
     }
 
 
-    private void createProfileEditPanel() {
-        getContentPane().remove(scrollPane);
-
-        JPanel profileEditPanel = new JPanel();
-        profileEditPanel.setLayout(new BoxLayout(profileEditPanel, BoxLayout.Y_AXIS));
-        profileEditPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
-        profileEditPanel.setBackground(Color.WHITE);
-
-        // Title
-        JLabel titleLabel = new JLabel("Edit Your Profile");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Current profile info display
-        JPanel infoPanel = new JPanel(new GridLayout(3, 2, 10, 15));
-        infoPanel.setBackground(Color.WHITE);
-        infoPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
-        infoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        infoPanel.setMaximumSize(new Dimension(500, 150));
-
-        // Name field
-        JLabel nameLabel = new JLabel("Name:");
-        JTextField nameField = new JTextField(currentUser.getName());
-
-        // Email field (read-only)
-        JLabel emailLabel = new JLabel("Email:");
-        JTextField emailField = new JTextField(currentUser.getEmail());
-        emailField.setEditable(false);  // Email shouldn't be changed
-
-        // Password field
-        JLabel passwordLabel = new JLabel("New Password:");
-        JPasswordField passwordField = new JPasswordField();
-
-        infoPanel.add(nameLabel);
-        infoPanel.add(nameField);
-        infoPanel.add(emailLabel);
-        infoPanel.add(emailField);
-        infoPanel.add(passwordLabel);
-        infoPanel.add(passwordField);
-
-        // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.setBackground(Color.WHITE);
-
-        JButton saveButton = new JButton("Save Changes");
-        JButton cancelButton = new JButton("Cancel");
-
-        buttonPanel.add(saveButton);
-        buttonPanel.add(cancelButton);
-
-        // Status label
-        JLabel statusLabel = new JLabel(" ");
-        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Add components to panel
-        profileEditPanel.add(titleLabel);
-        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        profileEditPanel.add(infoPanel);
-        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        profileEditPanel.add(buttonPanel);
-        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        profileEditPanel.add(statusLabel);
-
-        // Save button action
-        saveButton.addActionListener(e -> {
-            String newName = nameField.getText();
-            String newPassword = new String(passwordField.getPassword());
-
-            if (newName.isEmpty()) {
-                statusLabel.setText("Name cannot be empty");
-                statusLabel.setForeground(Color.RED);
-                return;
-            }
-
-            // Update user info
-            currentUser.setName(newName);
-            userNames.put(currentUser.getEmail(), newName);
-
-            if (!newPassword.isEmpty()) {
-                currentUser.setPassword(newPassword);
-                userCredentials.put(currentUser.getEmail(), newPassword);
-            }
-
-            statusLabel.setText("Profile updated successfully!");
-            statusLabel.setForeground(Color.GREEN);
-
-            // Return to main screen after a delay
-            Timer timer = new Timer(1500, event -> {
-                getContentPane().remove(profileEditPanel);
-                getContentPane().add(scrollPane);
-
-                // Refresh hero section to show updated name
-                mainPanel.removeAll();
-                createNavBar();
-                createHeroSection();
-                createOfferSection();
-                createAboutSection();
-                createFooterSection();
-
-                revalidate();
-                repaint();
-            });
-            timer.setRepeats(false);
-            timer.start();
-        });
-
-        // Cancel button action
-        cancelButton.addActionListener(e -> {
-            getContentPane().remove(profileEditPanel);
-            getContentPane().add(scrollPane);
-            revalidate();
-            repaint();
-        });
-
-        getContentPane().add(profileEditPanel);
-        revalidate();
-        repaint();
-    }
-
-    private JPanel createCategoryPanel(String title) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
-
-        JLabel panelTitle = new JLabel(title);
-        panelTitle.setFont(new Font("Arial", Font.BOLD, 18));
-        panelTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panelTitle.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 0));
-
-        panel.add(panelTitle);
-        return panel;
-    }
-
 
 
     private JPanel createIconPanel(Color bgColor, String iconText) {
@@ -1230,6 +1099,476 @@ public class EcoSparkApp extends JFrame {
         quizPanel.add(scrollPane, BorderLayout.CENTER);
 
         mainPanel.add(quizPanel, "quiz");
+    }
+
+    private void createProfileEditPanel() {
+        getContentPane().remove(scrollPane);
+
+        JPanel profileEditPanel = new JPanel();
+        profileEditPanel.setLayout(new BoxLayout(profileEditPanel, BoxLayout.Y_AXIS));
+        profileEditPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
+        profileEditPanel.setBackground(Color.WHITE);
+
+        // Title
+        JLabel titleLabel = new JLabel("Edit Your Profile");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Current profile info display
+        JPanel infoPanel = new JPanel(new GridLayout(3, 2, 10, 15));
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
+        infoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        infoPanel.setMaximumSize(new Dimension(500, 150));
+
+        // Name field
+        JLabel nameLabel = new JLabel("Name:");
+        JTextField nameField = new JTextField(currentUser.getName());
+
+        // Email field (read-only)
+        JLabel emailLabel = new JLabel("Email:");
+        JTextField emailField = new JTextField(currentUser.getEmail());
+        emailField.setEditable(false);  // Email shouldn't be changed
+
+        // Password field
+        JLabel passwordLabel = new JLabel("New Password:");
+        JPasswordField passwordField = new JPasswordField();
+
+        infoPanel.add(nameLabel);
+        infoPanel.add(nameField);
+        infoPanel.add(emailLabel);
+        infoPanel.add(emailField);
+        infoPanel.add(passwordLabel);
+        infoPanel.add(passwordField);
+
+        // Points display
+        JPanel pointsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        pointsPanel.setBackground(Color.WHITE);
+        pointsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel pointsLabel = new JLabel("Total Points: " + currentUser.getPoints());
+        pointsLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        pointsLabel.setForeground(new Color(33, 150, 83)); // Using the primaryColor from DashboardPanel
+        pointsPanel.add(pointsLabel);
+
+        // Completed Tasks Section
+        JPanel tasksPanel = new JPanel();
+        tasksPanel.setLayout(new BoxLayout(tasksPanel, BoxLayout.Y_AXIS));
+        tasksPanel.setBackground(Color.WHITE);
+        tasksPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                "Completed Tasks",
+                TitledBorder.LEFT,
+                TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14)
+        ));
+        tasksPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        tasksPanel.setMaximumSize(new Dimension(600, 250));
+
+        // Create a panel to hold the task items
+        JPanel taskListPanel = new JPanel();
+        taskListPanel.setLayout(new BoxLayout(taskListPanel, BoxLayout.Y_AXIS));
+        taskListPanel.setBackground(Color.WHITE);
+
+        // Add completed tasks
+        List<Task> completedTasks = currentUser.getCompletedTasks();
+        if (completedTasks.isEmpty()) {
+            JLabel noTasksLabel = new JLabel("No tasks completed yet");
+            noTasksLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            noTasksLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+            taskListPanel.add(noTasksLabel);
+        } else {
+            for (Task task : completedTasks) {
+                JPanel taskItem = createTaskListItem(task);
+                taskListPanel.add(taskItem);
+                taskListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            }
+        }
+
+        JScrollPane taskScrollPane = new JScrollPane(taskListPanel);
+        taskScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        taskScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        taskScrollPane.setPreferredSize(new Dimension(0, 200));
+        taskScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        tasksPanel.add(taskScrollPane);
+
+        // Badges Section
+        JPanel badgesPanel = new JPanel();
+        badgesPanel.setLayout(new BoxLayout(badgesPanel, BoxLayout.Y_AXIS));
+        badgesPanel.setBackground(Color.WHITE);
+        badgesPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                "Your Badges",
+                TitledBorder.LEFT,
+                TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14)
+        ));
+        badgesPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        badgesPanel.setMaximumSize(new Dimension(600, 250));
+
+        // Create a panel to display badges in a grid
+        JPanel badgeGridPanel = new JPanel(new GridLayout(0, 4, 10, 10));
+        badgeGridPanel.setBackground(Color.WHITE);
+
+        // Add badges
+        List<String> userBadges = currentUser.getBadges();
+        if (userBadges.isEmpty()) {
+            JLabel noBadgesLabel = new JLabel("No badges earned yet");
+            noBadgesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            noBadgesLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+            badgeGridPanel.add(noBadgesLabel);
+        } else {
+            for (String badgeName : userBadges) {
+                JPanel badgeItem = createBadgeItem(badgeName);
+                badgeGridPanel.add(badgeItem);
+            }
+        }
+
+        JScrollPane badgeScrollPane = new JScrollPane(badgeGridPanel);
+        badgeScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        badgeScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        badgeScrollPane.setPreferredSize(new Dimension(0, 200));
+        badgeScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        badgesPanel.add(badgeScrollPane);
+
+        // Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(Color.WHITE);
+
+        JButton saveButton = new JButton("Save Changes");
+        JButton cancelButton = new JButton("Cancel");
+
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+
+        // Status label
+        JLabel statusLabel = new JLabel(" ");
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Add components to panel
+        profileEditPanel.add(titleLabel);
+        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        profileEditPanel.add(infoPanel);
+        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        profileEditPanel.add(pointsPanel);
+        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        profileEditPanel.add(tasksPanel);
+        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        profileEditPanel.add(badgesPanel);
+        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        profileEditPanel.add(buttonPanel);
+        profileEditPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        profileEditPanel.add(statusLabel);
+
+        // Save button action
+        saveButton.addActionListener(e -> {
+            String newName = nameField.getText();
+            String newPassword = new String(passwordField.getPassword());
+
+            if (newName.isEmpty()) {
+                statusLabel.setText("Name cannot be empty");
+                statusLabel.setForeground(Color.RED);
+                return;
+            }
+
+            // Update user info
+            currentUser.setName(newName);
+            userNames.put(currentUser.getEmail(), newName);
+
+            if (!newPassword.isEmpty()) {
+                currentUser.setPassword(newPassword);
+                userCredentials.put(currentUser.getEmail(), newPassword);
+            }
+
+            statusLabel.setText("Profile updated successfully!");
+            statusLabel.setForeground(Color.GREEN);
+
+            // Return to main screen after a delay
+            Timer timer = new Timer(1500, event -> {
+                getContentPane().remove(profileEditPanel);
+                getContentPane().add(scrollPane);
+
+                // Refresh hero section to show updated name
+                mainPanel.removeAll();
+                createNavBar();
+                createHeroSection();
+                createOfferSection();
+                createAboutSection();
+                createFooterSection();
+
+                revalidate();
+                repaint();
+            });
+            timer.setRepeats(false);
+            timer.start();
+        });
+
+        // Cancel button action
+        cancelButton.addActionListener(e -> {
+            getContentPane().remove(profileEditPanel);
+            getContentPane().add(scrollPane);
+            revalidate();
+            repaint();
+        });
+
+        getContentPane().add(profileEditPanel);
+        revalidate();
+        repaint();
+    }
+
+    // Helper method to create a task list item
+    private JPanel createTaskListItem(Task task) {
+        JPanel taskItem = new JPanel(new BorderLayout(10, 0));
+        taskItem.setBackground(Color.WHITE);
+        taskItem.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(8, 5, 8, 5)
+        ));
+        taskItem.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+
+        // Create icon based on task type
+        JPanel iconPanel = createColorfulTaskIcon(task.getType());
+
+        // Task details
+        JPanel detailsPanel = new JPanel();
+        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+        detailsPanel.setBackground(Color.WHITE);
+
+        JLabel titleLabel = new JLabel(task.getTitle());
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+        JLabel pointsLabel = new JLabel("+" + task.getPointsValue() + " pts");
+        pointsLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        pointsLabel.setForeground(new Color(33, 150, 83));
+
+        detailsPanel.add(titleLabel);
+        detailsPanel.add(Box.createRigidArea(new Dimension(0, 3)));
+        detailsPanel.add(pointsLabel);
+
+        taskItem.add(iconPanel, BorderLayout.WEST);
+        taskItem.add(detailsPanel, BorderLayout.CENTER);
+
+        return taskItem;
+    }
+
+    // Helper method to create a badge item
+    private JPanel createBadgeItem(String badgeName) {
+        Color badgeColor = getBadgeColor(badgeName);
+        String badgeIcon = getBadgeIcon(badgeName);
+
+        JPanel badgePanel = new JPanel();
+        badgePanel.setLayout(new BoxLayout(badgePanel, BoxLayout.Y_AXIS));
+        badgePanel.setBackground(Color.WHITE);
+
+        // Create rounded badge icon
+        JPanel iconPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(badgeColor);
+                g2d.fillOval(0, 0, getWidth(), getHeight());
+            }
+        };
+
+        iconPanel.setPreferredSize(new Dimension(50, 50));
+        iconPanel.setMaximumSize(new Dimension(50, 50));
+        iconPanel.setMinimumSize(new Dimension(50, 50));
+        iconPanel.setBackground(Color.WHITE);
+
+        JLabel iconLabel = new JLabel(badgeIcon);
+        iconLabel.setFont(new Font("Dialog", Font.PLAIN, 20));
+        iconLabel.setForeground(Color.WHITE);
+        iconPanel.setLayout(new GridBagLayout());
+        iconPanel.add(iconLabel);
+
+        JLabel nameLabel = new JLabel(badgeName, JLabel.CENTER);
+        nameLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        badgePanel.add(iconPanel);
+        badgePanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        badgePanel.add(nameLabel);
+
+        return badgePanel;
+    }
+
+    // Helper method to create colorful task icon similar to DashboardPanel
+    private JPanel createColorfulTaskIcon(String taskType) {
+        JPanel iconPanel = new JPanel();
+        iconPanel.setPreferredSize(new Dimension(40, 40));
+        iconPanel.setMaximumSize(new Dimension(40, 40));
+        iconPanel.setMinimumSize(new Dimension(40, 40));
+
+        // Determine color and icon based on task type
+        Color bgColor;
+        String iconText;
+
+        switch (taskType.toLowerCase()) {
+            case "community":
+                bgColor = new Color(135, 206, 250); // Light blue
+                iconText = "🌎";
+                break;
+            case "energy":
+                bgColor = new Color(255, 215, 0); // Gold
+                iconText = "💡";
+                break;
+            case "water":
+                bgColor = new Color(30, 144, 255); // Dodger blue
+                iconText = "💧";
+                break;
+            case "waste":
+                bgColor = new Color(152, 251, 152); // Pale green
+                iconText = "♻️";
+                break;
+            case "consumption":
+                bgColor = new Color(255, 182, 193); // Light pink
+                iconText = "🛍️";
+                break;
+            case "food":
+                bgColor = new Color(255, 165, 0); // Orange
+                iconText = "🍎";
+                break;
+            case "transport":
+                bgColor = new Color(147, 112, 219); // Medium purple
+                iconText = "🚲";
+                break;
+            case "conservation":
+                bgColor = new Color(60, 179, 113); // Medium sea green
+                iconText = "🌳";
+                break;
+            case "sustainable":
+            default:
+                bgColor = new Color(173, 216, 230); // Light blue
+                iconText = "🌱";
+                break;
+        }
+
+        // Final color and icon
+        final Color finalBgColor = bgColor;
+        final String finalIconText = iconText;
+
+        // Create rounded panel with icon
+        JPanel colorPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(finalBgColor);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+            }
+        };
+
+        colorPanel.setLayout(new GridBagLayout());
+
+        JLabel iconLabel = new JLabel(finalIconText);
+        iconLabel.setFont(new Font("Dialog", Font.PLAIN, 18));
+        colorPanel.add(iconLabel);
+
+        iconPanel.setLayout(new BorderLayout());
+        iconPanel.add(colorPanel, BorderLayout.CENTER);
+
+        return iconPanel;
+    }
+
+    // Helper method to get badge color
+    private Color getBadgeColor(String badgeName) {
+        // This matches the badge colors from the DashboardPanel
+        switch (badgeName.toLowerCase()) {
+            case "novice":
+                return new Color(173, 216, 230);
+            case "beginner":
+                return new Color(135, 206, 235);
+            case "intermediate":
+                return new Color(0, 191, 255);
+            case "advanced":
+                return new Color(30, 144, 255);
+            case "expert":
+                return new Color(0, 0, 205);
+            case "master":
+                return new Color(75, 0, 130);
+            case "community champion":
+            case "community":
+                return new Color(135, 206, 250);
+            case "eco learner":
+            case "learning":
+                return new Color(173, 216, 230);
+            case "green innovator":
+            case "innovation":
+                return new Color(152, 251, 152);
+            case "water protector":
+            case "water":
+                return new Color(30, 144, 255);
+            case "energy saver":
+            case "energy":
+                return new Color(255, 215, 0);
+            case "zero waste hero":
+            case "waste":
+                return new Color(255, 182, 193);
+            default:
+                return new Color(33, 150, 83); // Primary color for unknown badges
+        }
+    }
+
+    // Helper method to get badge icon
+    private String getBadgeIcon(String badgeName) {
+        // This matches the badge icons from the DashboardPanel
+        switch (badgeName.toLowerCase()) {
+            case "novice":
+                return "🌱";
+            case "beginner":
+                return "🌿";
+            case "intermediate":
+                return "🌍";
+            case "advanced":
+                return "🌊";
+            case "expert":
+                return "⭐";
+            case "master":
+                return "🏆";
+            case "community champion":
+            case "community":
+                return "🤝";
+            case "eco learner":
+            case "learning":
+                return "🧩";
+            case "green innovator":
+            case "innovation":
+                return "💡";
+            case "water protector":
+            case "water":
+                return "💧";
+            case "energy saver":
+            case "energy":
+                return "⚡";
+            case "zero waste hero":
+            case "waste":
+                return "♻️";
+            case "biodiversity guardian":
+            case "biodiversity":
+                return "🌺";
+            case "environmental advocate":
+            case "advocacy":
+                return "🏅";
+            case "climate defender":
+            case "climate":
+                return "🌀";
+            case "ocean defender":
+            case "oceans":
+                return "🐠";
+            case "plastic fighter":
+            case "plastic":
+                return "🚫";
+            case "forest guardian":
+            case "forest":
+                return "🌲";
+            default:
+                return "🌱"; // Default icon for unknown badges
+        }
     }
 
     private void createOfferSection() {
