@@ -1,16 +1,20 @@
 import java.awt.*;
 import java.io.InputStream;
 
+/**
+ * Defines the color and font constants used in the EcoSparkApp to
+ * give the application a more aesthetic appeal.
+ *
+ * Uses the imported DM_Sans and Poppins fonts
+ */
 public class UIConstants {
 
     static final Color PRIMARY_COLOR = new Color(70, 130, 95);
-    static final Color SECONDARY_COLOR = new Color(245, 245, 240);
     static final Color ACCENT_COLOR = new Color(95, 102, 177);
     static final Color BUTTON_BLUE = new Color(65, 90, 230);
     static final Color TEXT_COLOR = new Color(30, 30, 30);
     static final Color BRIGHT_BLUE = new Color(81, 146, 207);
     static final Color GREEN_CHECK = new Color(120, 180, 120);
-
 
     public static final Font HEADER_FONT;
     public static final Font BODY_FONT;

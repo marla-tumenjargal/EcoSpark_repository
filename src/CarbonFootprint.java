@@ -6,6 +6,7 @@ import java.util.Map;
 /**
  * Handles the calculation and analysis of a user's carbon footprint
  * based on their lifestyle inputs across various categories.
+ * hihihih
  */
 class CarbonFootprint {
     // Carbon emission values by category in metric tons

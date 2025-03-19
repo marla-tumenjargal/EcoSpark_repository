@@ -3,13 +3,14 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.InputStream;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 public class EcoSparkApp extends JFrame {
 
+    private ApplicationModel model;
     private Profile currentUser;
     private JPanel mainPanel;
     private CardLayout cardLayout;
@@ -18,6 +19,7 @@ public class EcoSparkApp extends JFrame {
     private JPanel frame;
     private TaskManager taskManager;
     private JFrame dashboardFrame;
+    private Map<String, JComponent> formFields = new HashMap<>();
 
     CarbonFootprintCalculator calculator = new CarbonFootprintCalculator();
 
@@ -44,6 +46,18 @@ public class EcoSparkApp extends JFrame {
     }
 
     public EcoSparkApp() {
+        model = new ApplicationModel();
+
+        // For testing, create a default user
+        Profile defaultUser = new Profile("Test User", "test@example.com", "test");
+        model.setCurrentUser(defaultUser);
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         setTitle("🌲EcoSpark 🌲");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 1000);
@@ -60,9 +74,7 @@ public class EcoSparkApp extends JFrame {
         createOfferSection();
         createAboutSection();
         createFooterSection();
-        createTaskPanel();
 
-        // Create scroll pane and add main panel to it
         scrollPane = new JScrollPane(mainPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -70,6 +82,15 @@ public class EcoSparkApp extends JFrame {
 
         add(scrollPane);
         setVisible(true);
+    }
+
+    private void initializeUI() {
+
+        // Create the main dashboard panel
+        DashboardPanel dashboardPanel = new DashboardPanel(model);
+
+        dashboardFrame.getContentPane().add(dashboardPanel);
+        dashboardFrame.setVisible(true);
     }
 
     private void createCarbonFootprintPanel() {
@@ -83,32 +104,51 @@ public class EcoSparkApp extends JFrame {
 
         // Title
         JLabel titleLabel = new JLabel("Calculate Your Carbon Footprint");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(UIConstants.HEADER_FONT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Information Panel
+        JPanel infoPanel = createInfoPanel();
 
         // Create tabbed pane for different categories
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setBackground(Color.WHITE);
 
-        // Add tabs that match the UI
-        tabbedPane.addTab("General Usages", createGeneralPanel());
-        tabbedPane.addTab("Transportation", createTransportationPanel());
-        tabbedPane.addTab("Food Consumption", createFoodPanel());
-        tabbedPane.addTab("Energy Usage", createEnergyPanel());
-        tabbedPane.addTab("Waste & Other", createWastePanel());
+        // Add tabs with enhanced input fields
+        JPanel generalPanel = createGeneralPanel();
+        JPanel transportationPanel = createTransportationPanel();
+        JPanel foodPanel = createFoodPanel();
+        JPanel energyPanel = createEnergyPanel();
+        JPanel wastePanel = createWastePanel();
 
-        // Add top components to main panel
+        tabbedPane.addTab("General Usages", generalPanel);
+        tabbedPane.addTab("Transportation", transportationPanel);
+        tabbedPane.addTab("Food Consumption", foodPanel);
+        tabbedPane.addTab("Energy Usage", energyPanel);
+        tabbedPane.addTab("Waste & Other", wastePanel);
+
+        // Set the font for the tab headers to BUTTON_FONT
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            Component tabComponent = tabbedPane.getTabComponentAt(i);
+            if (tabComponent instanceof JComponent) {
+                ((JComponent) tabComponent).setFont(UIConstants.BUTTON_FONT);  // Apply BUTTON_FONT to tab headers
+            }
+        }
+
+        // Add components to main panel
         carbonFootprintPanel.add(titleLabel);
+        carbonFootprintPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        carbonFootprintPanel.add(infoPanel);
         carbonFootprintPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         carbonFootprintPanel.add(tabbedPane);
         tabbedPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
+
 
         // Submit button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
         JButton submitButton = new JButton("SUBMIT");
-        submitButton.setBackground(new Color(65, 105, 225));
-        submitButton.setForeground(Color.WHITE);
+        submitButton.setBackground(UIConstants.BUTTON_BLUE);
         submitButton.setPreferredSize(new Dimension(150, 40));
         buttonPanel.add(submitButton);
 
@@ -117,23 +157,7 @@ public class EcoSparkApp extends JFrame {
         carbonFootprintPanel.add(buttonPanel);
 
         // Results section
-        JPanel resultsPanel = new JPanel();
-        resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
-        resultsPanel.setBackground(Color.WHITE);
-
-        // Results title
-        JLabel footprintLabel = new JLabel("Your Footprint");
-        footprintLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        footprintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // Breakdown section
-        JPanel breakdownPanel = new JPanel(new GridLayout(0, 1, 10, 10));
-        breakdownPanel.setBackground(Color.WHITE);
-
-        // Add results components
-        resultsPanel.add(footprintLabel);
-        resultsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        resultsPanel.add(breakdownPanel);
+        JPanel resultsPanel = createResultsPanel();
 
         // Add results to main panel
         carbonFootprintPanel.add(Box.createRigidArea(new Dimension(0, 30)));
@@ -146,184 +170,268 @@ public class EcoSparkApp extends JFrame {
         carbonScrollPane.setBorder(null);
         carbonScrollPane.setBackground(Color.WHITE);
 
-        // UI elements for inputs (Example: Dropdowns, Text fields for actual input)
-        JComboBox<String> countryComboBox = new JComboBox<>(new String[]{"USA", "India", "China"});
-        JTextField carMilesField = new JTextField(5);
-        JComboBox<String> vehicleTypeComboBox = new JComboBox<>(new String[]{"SUV", "Sedan", "Truck"});
-        JComboBox<String> fuelTypeComboBox = new JComboBox<>(new String[]{"Diesel", "Electric", "Gas"});
-        JTextField flightsPerYearField = new JTextField(5);
-        JComboBox<String> dietTypeComboBox = new JComboBox<>(new String[]{"Vegan", "Vegetarian", "Omnivore"});
-        JTextField meatConsumptionField = new JTextField(5);
-        JTextField electricityUsageField = new JTextField(5);
-        JComboBox<String> energySourceComboBox = new JComboBox<>(new String[]{"Coal", "Solar", "Wind"});
-        JTextField wasteProducedField = new JTextField(5);
-
-        // Arrange inputs (replace with appropriate layout panels)
-        JPanel inputsPanel = new JPanel(new GridLayout(0, 2, 10, 10));
-        inputsPanel.add(new JLabel("Country:"));
-        inputsPanel.add(countryComboBox);
-        inputsPanel.add(new JLabel("Car Miles per Week:"));
-        inputsPanel.add(carMilesField);
-        inputsPanel.add(new JLabel("Vehicle Type:"));
-        inputsPanel.add(vehicleTypeComboBox);
-        inputsPanel.add(new JLabel("Fuel Type:"));
-        inputsPanel.add(fuelTypeComboBox);
-        inputsPanel.add(new JLabel("Flights per Year:"));
-        inputsPanel.add(flightsPerYearField);
-        inputsPanel.add(new JLabel("Diet Type:"));
-        inputsPanel.add(dietTypeComboBox);
-        inputsPanel.add(new JLabel("Meat Consumption (meals per week):"));
-        inputsPanel.add(meatConsumptionField);
-        inputsPanel.add(new JLabel("Electricity Usage (kWh):"));
-        inputsPanel.add(electricityUsageField);
-        inputsPanel.add(new JLabel("Energy Source:"));
-        inputsPanel.add(energySourceComboBox);
-        inputsPanel.add(new JLabel("Waste Produced (kg):"));
-        inputsPanel.add(wasteProducedField);
-
-        carbonFootprintPanel.add(inputsPanel);
-
-        // Submit button action listener
+        // Submit button action listener with validation
         submitButton.addActionListener(e -> {
-            // Retrieve actual input values from the UI components
-            String country = (String) countryComboBox.getSelectedItem();
-            int carMilesPerWeek = Integer.parseInt(carMilesField.getText());
-            String vehicleType = (String) vehicleTypeComboBox.getSelectedItem();
-            String fuelType = (String) fuelTypeComboBox.getSelectedItem();
-            int flightsPerYear = Integer.parseInt(flightsPerYearField.getText());
-            String dietType = (String) dietTypeComboBox.getSelectedItem();
-            int meatConsumption = Integer.parseInt(meatConsumptionField.getText());
-            double electricityUsage = Double.parseDouble(electricityUsageField.getText());
-            String energySource = (String) energySourceComboBox.getSelectedItem();
-            double wasteProduced = Double.parseDouble(wasteProducedField.getText());
-
-            // Calculate total footprint
-            double totalFootprint = CarbonFootprintCalculator.calculateTotalFootprint(
-                    country, carMilesPerWeek, vehicleType, fuelType, flightsPerYear,
-                    dietType, meatConsumption, electricityUsage, energySource, wasteProduced);
-
-            // Update the results breakdown
-            Map<String, Double> footprintData = new HashMap<>();
-            footprintData.put("General Usage", CarbonFootprintCalculator.calculateGeneralFootprint(country));
-            footprintData.put("Transportation", CarbonFootprintCalculator.calculateTransportationFootprint(carMilesPerWeek, vehicleType, fuelType, flightsPerYear));
-            footprintData.put("Food Consumption", CarbonFootprintCalculator.calculateFoodFootprint(dietType, meatConsumption));
-            footprintData.put("Energy Usage", CarbonFootprintCalculator.calculateEnergyFootprint(electricityUsage, energySource));
-            footprintData.put("Waste Production", CarbonFootprintCalculator.calculateWasteFootprint(wasteProduced));
-
-            // Show the results in the breakdown panel
-            breakdownPanel.removeAll();
-            for (Map.Entry<String, Double> entry : footprintData.entrySet()) {
-                JLabel categoryLabel = new JLabel(entry.getKey() + ": " + String.format("%.2f", entry.getValue()) + " tons");
-                categoryLabel.setOpaque(true);
-                categoryLabel.setBackground(getCategoryColor(entry.getKey()));  // Implement this method to get category colors
-                categoryLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-                breakdownPanel.add(categoryLabel);
-            }
-
-            // Show results panel
-            resultsPanel.setVisible(true);
-            JScrollBar vertical = carbonScrollPane.getVerticalScrollBar();
-            vertical.setValue(vertical.getMaximum());
-            revalidate();
-            repaint();
-        });
-
-        // Initially hide results until submission
-        resultsPanel.setVisible(false);
-
-        // Back button action listener
-        JButton backButton = new JButton("Back");
-        buttonPanel.add(backButton);
-        backButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getContentPane().remove(carbonFootprintPanel);
-                getContentPane().add(scrollPane);
-                revalidate();
-                repaint();
+            if (validateAllFieldsFilled()) {
+                calculateAndDisplayResults(resultsPanel);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Please fill in all fields before submitting.",
+                        "Incomplete Form",
+                        JOptionPane.WARNING_MESSAGE);
             }
         });
 
+        // Add the scroll pane to the content pane
         getContentPane().add(carbonScrollPane);
         setVisible(true);
     }
 
-    private JPanel createWastePanel() {
-        // Create a panel for waste input
-        JPanel wastePanel = new JPanel();
-        wastePanel.setLayout(new BoxLayout(wastePanel, BoxLayout.Y_AXIS));
-        wastePanel.setBackground(Color.WHITE);
-        wastePanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
-        // Title for waste section
-        JLabel wasteTitle = new JLabel("Waste Produced");
-        wasteTitle.setFont(new Font("Arial", Font.BOLD, 18));
-        wasteTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        wastePanel.add(wasteTitle);
-
-        // Description of waste section
-        JLabel wasteDescription = new JLabel("Please enter the amount of waste you produce per week (in kilograms):");
-        wasteDescription.setFont(new Font("Arial", Font.PLAIN, 14));
-        wasteDescription.setAlignmentX(Component.LEFT_ALIGNMENT);
-        wastePanel.add(wasteDescription);
-
-        // Text field for user input of waste produced
-        JTextField wasteProducedField = new JTextField(10);
-        wasteProducedField.setMaximumSize(new Dimension(200, 30));  // Set field width
-        wasteProducedField.setFont(new Font("Arial", Font.PLAIN, 14));
-        wastePanel.add(Box.createRigidArea(new Dimension(0, 10)));  // Spacer
-        wastePanel.add(wasteProducedField);
-
-        // Validation for waste input: Ensure that only numerical values are accepted
-        wasteProducedField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                String text = wasteProducedField.getText();
-                try {
-                    Double.parseDouble(text);  // Validate input
-                } catch (NumberFormatException ex) {
-                    // Optional: You can show a message or highlight the input field when the input is invalid
+    private boolean validateAllFieldsFilled() {
+        for (Map.Entry<String, JComponent> entry : formFields.entrySet()) {
+            if (entry.getValue() instanceof JTextField) {
+                JTextField textField = (JTextField) entry.getValue();
+                if (textField.getText().trim().isEmpty()) {
+                    return false;
+                }
+            } else if (entry.getValue() instanceof JComboBox) {
+                JComboBox<?> comboBox = (JComboBox<?>) entry.getValue();
+                if (comboBox.getSelectedIndex() == -1) {
+                    return false;
                 }
             }
-        });
+        }
+        return true;
+    }
 
-        return wastePanel;
+    private JPanel createInfoPanel() {
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        JLabel whatIsCarbonFootprintLabel = new JLabel("What is a carbon footprint?");
+        whatIsCarbonFootprintLabel.setFont(UIConstants.BUTTON_FONT);
+
+        JTextArea whatIsCarbonFootprintText = new JTextArea(
+                "A carbon footprint is the total amount of greenhouse gases (including carbon " +
+                        "dioxide and methane) that are generated by our actions. The average carbon " +
+                        "footprint for a person in the United States is 16 tons, one of the highest rates in " +
+                        "the world."
+        );
+        whatIsCarbonFootprintLabel.setFont(UIConstants.BODY_FONT);
+        whatIsCarbonFootprintText.setWrapStyleWord(true);
+        whatIsCarbonFootprintText.setLineWrap(true);
+        whatIsCarbonFootprintText.setEditable(false);
+        whatIsCarbonFootprintText.setBackground(Color.WHITE);
+
+        JLabel whyIsCarbonFootprintImportantLabel = new JLabel("Why is my carbon footprint important?");
+        whyIsCarbonFootprintImportantLabel.setFont(UIConstants.BUTTON_FONT);
+        JTextArea whyIsCarbonFootprintImportantText = new JTextArea(
+                "Your carbon footprint is important because it measures the total greenhouse " +
+                        "gas emissions for which you are responsible, contributing to climate change " +
+                        "and highlighting areas where you can reduce environmental impact."
+        );
+        whyIsCarbonFootprintImportantText.setWrapStyleWord(true);
+        whyIsCarbonFootprintImportantText.setLineWrap(true);
+        whyIsCarbonFootprintImportantText.setEditable(false);
+        whyIsCarbonFootprintImportantText.setBackground(Color.WHITE);
+        whyIsCarbonFootprintImportantText.setFont(UIConstants.BODY_FONT);
+
+        infoPanel.add(whatIsCarbonFootprintLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(whatIsCarbonFootprintText);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        infoPanel.add(whyIsCarbonFootprintImportantLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(whyIsCarbonFootprintImportantText);
+
+        return infoPanel;
+    }
+
+    private JPanel createResultsPanel() {
+        JPanel resultsPanel = new JPanel();
+        resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
+        resultsPanel.setBackground(Color.WHITE);
+        resultsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+
+        // Results title
+        JLabel footprintLabel = new JLabel("Your Footprint");
+        footprintLabel.setFont(UIConstants.HEADER_FONT);
+        footprintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure it's aligned left
+
+        // Total footprint display
+        JLabel totalFootprintLabel = new JLabel("Total Carbon Footprint: 0.00 tons CO2e");
+        totalFootprintLabel.setFont(UIConstants.BUTTON_FONT);
+        totalFootprintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure it's aligned left
+
+        // Breakdown section title
+        JLabel breakdownLabel = new JLabel("Breakdown by Category:");
+        breakdownLabel.setFont(UIConstants.BUTTON_FONT);
+        breakdownLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure it's aligned left
+
+        // Breakdown panel
+        JPanel breakdownPanel = new JPanel();
+        breakdownPanel.setBackground(Color.WHITE);
+        breakdownPanel.setLayout(new GridLayout(0, 1, 10, 10));  // Adjust spacing between the rows
+        breakdownPanel.setName("breakdownPanel");
+
+        // Add results components
+        resultsPanel.add(footprintLabel);
+        resultsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        resultsPanel.add(totalFootprintLabel);
+        resultsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        resultsPanel.add(breakdownLabel);
+        resultsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        resultsPanel.add(breakdownPanel);
+
+        totalFootprintLabel.setName("totalFootprintLabel");
+
+        return resultsPanel;
     }
 
 
+    private void calculateAndDisplayResults(JPanel resultsPanel) {
+        // Get all input values from form fields
+        Map<String, Object> inputValues = collectInputValues();
+
+        // Calculate total footprint using the calculator instance
+        double totalFootprint = calculator.calculateTotalFootprint(
+                (String) inputValues.get("country"),
+                Integer.parseInt((String) inputValues.get("carMilesPerWeek")),
+                (String) inputValues.get("vehicleType"),
+                (String) inputValues.get("fuelType"),
+                Integer.parseInt((String) inputValues.get("flightsPerYear")),
+                (String) inputValues.get("dietType"),
+                Integer.parseInt((String) inputValues.get("meatConsumption")),
+                Double.parseDouble((String) inputValues.get("electricityUsage")),
+                (String) inputValues.get("energySource"),
+                Double.parseDouble((String) inputValues.get("wasteProduced"))
+        );
+
+        // Get breakdown data
+        Map<String, Double> footprintData = new HashMap<>();
+        footprintData.put("General Usage", calculator.calculateGeneralFootprint((String) inputValues.get("country")));
+        footprintData.put("Transportation", calculator.calculateTransportationFootprint(
+                Integer.parseInt((String) inputValues.get("carMilesPerWeek")),
+                (String) inputValues.get("vehicleType"),
+                (String) inputValues.get("fuelType"),
+                Integer.parseInt((String) inputValues.get("flightsPerYear"))
+        ));
+        footprintData.put("Food Consumption", calculator.calculateFoodFootprint(
+                (String) inputValues.get("dietType"),
+                Integer.parseInt((String) inputValues.get("meatConsumption"))
+        ));
+        footprintData.put("Energy Usage", calculator.calculateEnergyFootprint(
+                Double.parseDouble((String) inputValues.get("electricityUsage")),
+                (String) inputValues.get("energySource")
+        ));
+        footprintData.put("Waste Production", calculator.calculateWasteFootprint(
+                Double.parseDouble((String) inputValues.get("wasteProduced"))
+        ));
+
+        // Update total footprint label
+        for (Component comp : resultsPanel.getComponents()) {
+            if (comp instanceof JLabel && "totalFootprintLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText("Total Carbon Footprint: " + String.format("%.2f", totalFootprint) + " tons CO2e");
+                break;
+            }
+        }
+
+        // Update breakdown panel
+        for (Component comp : resultsPanel.getComponents()) {
+            if (comp instanceof JPanel && "breakdownPanel".equals(comp.getName())) {
+                JPanel breakdownPanel = (JPanel) comp;
+                breakdownPanel.removeAll();
+
+                for (Map.Entry<String, Double> entry : footprintData.entrySet()) {
+                    JPanel categoryPanel = new JPanel(new BorderLayout());
+                    categoryPanel.setBackground(getCategoryColor(entry.getKey()));
+
+                    JLabel categoryLabel = new JLabel(entry.getKey() + ": " + String.format("%.2f", entry.getValue()) + " tons");
+                    categoryLabel.setForeground(Color.WHITE);
+                    categoryLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+                    categoryPanel.add(categoryLabel, BorderLayout.CENTER);
+                    breakdownPanel.add(categoryPanel);
+                }
+
+                break;
+            }
+        }
+
+        // Show results panel
+        resultsPanel.setVisible(true);
+        revalidate();
+        repaint();
+    }
+
+    private Map<String, Object> collectInputValues() {
+        Map<String, Object> values = new HashMap<>();
+
+        // Collect values from form fields
+        for (Map.Entry<String, JComponent> entry : formFields.entrySet()) {
+            String key = entry.getKey();
+            JComponent component = entry.getValue();
+
+            if (component instanceof JTextField) {
+                values.put(key, ((JTextField) component).getText());
+            } else if (component instanceof JComboBox) {
+                values.put(key, ((JComboBox<?>) component).getSelectedItem().toString());
+            }
+        }
+
+        return values;
+    }
+
     private Color getCategoryColor(String category) {
         switch (category) {
-            case "General":
+            case "General Usage":
                 return new Color(65, 105, 225); // Royal Blue
             case "Transportation":
                 return new Color(220, 20, 60); // Crimson
-            case "Food":
+            case "Food Consumption":
                 return new Color(34, 139, 34); // Forest Green
-            case "Energy":
+            case "Energy Usage":
                 return new Color(218, 165, 32); // Goldenrod
-            case "Other":
+            case "Waste Production":
                 return new Color(41, 128, 185); // Steel Blue
             default:
                 return Color.LIGHT_GRAY;
         }
     }
 
-    // Helper methods for creating tab panels
+    // Enhanced tab panels with 7+ questions each and sample responses
     private JPanel createGeneralPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(new Color(240, 240, 240)); // Light gray background from image
+        panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Country selection
-        JLabel countryLabel = new JLabel("What country do you live in?");
-        JComboBox<String> countrySelector = new JComboBox<>(new String[]{"Select"});
-        countrySelector.setMaximumSize(new Dimension(300, 30));
+        // Create combo boxes with empty selection
+        JComboBox<String> countryCombo = new JComboBox<>(new String[]{"", "USA", "Canada", "UK", "China", "India", "Brazil", "Australia", "Other"});
+        JComboBox<String> stateCombo = new JComboBox<>(new String[]{"", "Alabama", "Alaska", "Arizona", "California", "Colorado", "New York", "Texas", "Other"});
+        JComboBox<String> householdCombo = new JComboBox<>(new String[]{"", "1", "2", "3", "4", "5+"});
+        JComboBox<String> areaCombo = new JComboBox<>(new String[]{"", "Urban", "Suburban", "Rural"});
+        JComboBox<String> homeCombo = new JComboBox<>(new String[]{"", "Apartment", "Townhouse", "Single Family Home", "Other"});
+        JComboBox<String> renewableCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Partial"});
 
-        // Add components with spacing
-        panel.add(countryLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-        panel.add(countrySelector);
+        // Add fields with sample responses
+        addFormFieldWithSample(panel, "What country do you live in?", countryCombo, "(e.g., USA)");
+        addFormFieldWithSample(panel, "What state do you live in? (US only)", stateCombo, "(e.g., California)");
+        addFormFieldWithSample(panel, "How many people are in your household?", householdCombo, "(e.g., 3)");
+        addFormFieldWithSample(panel, "Do you live in an urban, suburban, or rural area?", areaCombo, "(e.g., Suburban)");
+        addFormFieldWithSample(panel, "What type of home do you live in?", homeCombo, "(e.g., Apartment)");
+        addFormFieldWithSample(panel, "What is the square footage of your home?", createAndRegisterTextField("squareFootage"), "(e.g., 1500)");
+        addFormFieldWithSample(panel, "Do you use renewable energy at home?", renewableCombo, "(e.g., Partial)");
+
+        formFields.put("country", countryCombo);
+        formFields.put("state", stateCombo);
+        formFields.put("household", householdCombo);
+        formFields.put("area", areaCombo);
+        formFields.put("homeType", homeCombo);
+        formFields.put("renewable", renewableCombo);
 
         return panel;
     }
@@ -334,15 +442,23 @@ public class EcoSparkApp extends JFrame {
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Car miles
-        JLabel carLabel = new JLabel("Car Miles Driven (per week):");
-        JTextField carField = new JTextField(10);
-        carField.setMaximumSize(new Dimension(300, 30));
+        // Create combo boxes with empty selection
+        JComboBox<String> vehicleTypeCombo = new JComboBox<>(new String[]{"", "SUV", "Sedan", "Truck", "Compact Car", "Hybrid", "Electric Vehicle", "None"});
+        JComboBox<String> fuelTypeCombo = new JComboBox<>(new String[]{"", "Gas", "Diesel", "Electric", "Hybrid", "Other"});
+        JComboBox<String> carpoolCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Sometimes"});
 
-        // Add components with spacing
-        panel.add(carLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-        panel.add(carField);
+        // Add fields with sample responses
+        addFormFieldWithSample(panel, "How many miles do you drive per week?", createAndRegisterTextField("carMilesPerWeek"), "(e.g., 100)");
+        addFormFieldWithSample(panel, "What type of vehicle do you own?", vehicleTypeCombo, "(e.g., Sedan)");
+        addFormFieldWithSample(panel, "What type of fuel does your vehicle use?", fuelTypeCombo, "(e.g., Gas)");
+        addFormFieldWithSample(panel, "How fuel-efficient is your vehicle (mpg)?", createAndRegisterTextField("mpg"), "(e.g., 25 miles per gallon)");
+        addFormFieldWithSample(panel, "How many flights do you take per year?", createAndRegisterTextField("flightsPerYear"), "(e.g., 2)");
+        addFormFieldWithSample(panel, "How many miles do you travel by public transit weekly?", createAndRegisterTextField("transitMiles"), "(e.g., 30)");
+        addFormFieldWithSample(panel, "Do you carpool regularly?", carpoolCombo, "(e.g., Sometimes)");
+
+        formFields.put("vehicleType", vehicleTypeCombo);
+        formFields.put("fuelType", fuelTypeCombo);
+        formFields.put("carpool", carpoolCombo);
 
         return panel;
     }
@@ -353,16 +469,27 @@ public class EcoSparkApp extends JFrame {
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Diet type
-        JLabel dietLabel = new JLabel("What type of diet do you follow?");
-        String[] dietOptions = {"Select", "Omnivore", "Pescatarian", "Vegetarian", "Vegan"};
-        JComboBox<String> dietSelector = new JComboBox<>(dietOptions);
-        dietSelector.setMaximumSize(new Dimension(300, 30));
+        // Create combo boxes with empty selection
+        JComboBox<String> dietTypeCombo = new JComboBox<>(new String[]{"", "Vegan", "Vegetarian", "Pescatarian", "Omnivore", "Keto", "Other"});
+        JComboBox<String> localFoodCombo = new JComboBox<>(new String[]{"", "0-20%", "21-40%", "41-60%", "61-80%", "81-100%"});
+        JComboBox<String> restaurantCombo = new JComboBox<>(new String[]{"", "Daily", "Several times a week", "Weekly", "Monthly", "Rarely"});
+        JComboBox<String> foodWasteCombo = new JComboBox<>(new String[]{"", "Very little", "Some", "Average", "Significant", "A lot"});
+        JComboBox<String> growFoodCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Some"});
 
-        // Add components with spacing
-        panel.add(dietLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-        panel.add(dietSelector);
+        // Add fields with sample responses
+        addFormFieldWithSample(panel, "What type of diet do you follow?", dietTypeCombo, "(e.g., Omnivore)");
+        addFormFieldWithSample(panel, "How many meat-containing meals do you eat per week?", createAndRegisterTextField("meatConsumption"), "(e.g., 7)");
+        addFormFieldWithSample(panel, "How many dairy-containing meals do you eat per week?", createAndRegisterTextField("dairyConsumption"), "(e.g., 14)");
+        addFormFieldWithSample(panel, "What percentage of your food is locally produced?", localFoodCombo, "(e.g., 21-40%)");
+        addFormFieldWithSample(panel, "How often do you eat at restaurants?", restaurantCombo, "(e.g., Weekly)");
+        addFormFieldWithSample(panel, "How much food waste do you generate weekly?", foodWasteCombo, "(e.g., Some)");
+        addFormFieldWithSample(panel, "Do you grow any of your own food?", growFoodCombo, "(e.g., No)");
+
+        formFields.put("dietType", dietTypeCombo);
+        formFields.put("localFood", localFoodCombo);
+        formFields.put("restaurant", restaurantCombo);
+        formFields.put("foodWaste", foodWasteCombo);
+        formFields.put("growFood", growFoodCombo);
 
         return panel;
     }
@@ -373,357 +500,94 @@ public class EcoSparkApp extends JFrame {
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Electricity usage
-        JLabel electricityLabel = new JLabel("Electricity Usage (kWh/month):");
-        JTextField electricityField = new JTextField(10);
-        electricityField.setMaximumSize(new Dimension(300, 30));
+        // Create combo boxes with empty selection
+        JComboBox<String> energySourceCombo = new JComboBox<>(new String[]{"", "Coal", "Natural Gas", "Nuclear", "Solar", "Wind", "Hydroelectric", "Other"});
+        JComboBox<String> efficientAppliancesCombo = new JComboBox<>(new String[]{"", "All", "Most", "Some", "Few", "None"});
+        JComboBox<String> ledBulbsCombo = new JComboBox<>(new String[]{"", "All", "Most", "Some", "None"});
 
-        // Add components with spacing
-        panel.add(electricityLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-        panel.add(electricityField);
+        // Add fields with sample responses
+        addFormFieldWithSample(panel, "What is your average monthly electricity usage (kWh)?", createAndRegisterTextField("electricityUsage"), "(e.g., 500)");
+        addFormFieldWithSample(panel, "What is your primary source of electricity?", energySourceCombo, "(e.g., Natural Gas)");
+        addFormFieldWithSample(panel, "What is your average monthly natural gas usage?", createAndRegisterTextField("gasUsage"), "(e.g., 100 therms)");
+        addFormFieldWithSample(panel, "Do you use any energy-efficient appliances?", efficientAppliancesCombo, "(e.g., Most)");
+        addFormFieldWithSample(panel, "What temperature do you keep your home in summer?", createAndRegisterTextField("summerTemp"), "(e.g., 75°F)");
+        addFormFieldWithSample(panel, "What temperature do you keep your home in winter?", createAndRegisterTextField("winterTemp"), "(e.g., 68°F)");
+        addFormFieldWithSample(panel, "Do you use LED light bulbs?", ledBulbsCombo, "(e.g., Most)");
+
+        formFields.put("energySource", energySourceCombo);
+        formFields.put("efficientAppliances", efficientAppliancesCombo);
+        formFields.put("ledBulbs", ledBulbsCombo);
 
         return panel;
     }
 
-    private JPanel createOtherPanel() {
+    private JPanel createWastePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Waste produced
-        JLabel wasteLabel = new JLabel("Waste Produced (kg/week):");
-        JTextField wasteField = new JTextField(10);
-        wasteField.setMaximumSize(new Dimension(300, 30));
+        // Create combo boxes with empty selection
+        JComboBox<String> recycleCombo = new JComboBox<>(new String[]{"", "Always", "Often", "Sometimes", "Rarely", "Never"});
+        JComboBox<String> compostCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Sometimes"});
+        JComboBox<String> clothesCombo = new JComboBox<>(new String[]{"", "Weekly", "Monthly", "Quarterly", "Yearly", "Rarely"});
+        JComboBox<String> electronicsCombo = new JComboBox<>(new String[]{"", "Monthly", "Quarterly", "Yearly", "Every few years", "Rarely"});
+        JComboBox<String> plasticCombo = new JComboBox<>(new String[]{"", "Daily", "Often", "Sometimes", "Rarely", "Never"});
 
-        // Add components with spacing
-        panel.add(wasteLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-        panel.add(wasteField);
+        // Add fields with sample responses
+        addFormFieldWithSample(panel, "How much waste do you produce per week (kg)?", createAndRegisterTextField("wasteProduced"), "(e.g., 10)");
+        addFormFieldWithSample(panel, "Do you recycle?", recycleCombo, "(e.g., Often)");
+        addFormFieldWithSample(panel, "Do you compost?", compostCombo, "(e.g., Sometimes)");
+        addFormFieldWithSample(panel, "How often do you buy new clothes?", clothesCombo, "(e.g., Quarterly)");
+        addFormFieldWithSample(panel, "How often do you buy new electronics?", electronicsCombo, "(e.g., Yearly)");
+        addFormFieldWithSample(panel, "Do you use single-use plastics?", plasticCombo, "(e.g., Sometimes)");
+        addFormFieldWithSample(panel, "How many disposable items do you use weekly?", createAndRegisterTextField("disposableItems"), "(e.g., 15)");
+
+        formFields.put("recycle", recycleCombo);
+        formFields.put("compost", compostCombo);
+        formFields.put("clothes", clothesCombo);
+        formFields.put("electronics", electronicsCombo);
+        formFields.put("plastic", plasticCombo);
 
         return panel;
     }
 
-        private void openDashboardWindow() {
-        // Create a new frame for the dashboard
-        JFrame dashboardFrame = new JFrame("Dashboard");
-        dashboardFrame.setSize(800, 600);
-        dashboardFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        dashboardFrame.setLocationRelativeTo(null); // Center the window
-
-        // Call your existing createDashboardPanel() method
-        JPanel dashboardPanel = new JPanel();
-        createDashboardPanel(dashboardPanel); // Populate dashboardPanel
-
-        // Add the panel to the new frame and show it
-        dashboardFrame.add(dashboardPanel);
-        dashboardFrame.setVisible(true);
+    private JTextField createAndRegisterTextField(String fieldName) {
+        JTextField textField = new JTextField(10);
+        formFields.put(fieldName, textField);
+        return textField;
     }
 
+    // Helper method to add form fields with sample responses
+    private void addFormFieldWithSample(JPanel panel, String labelText, JComponent inputComponent, String sampleText) {
+        JPanel fieldPanel = new JPanel();
+        fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.X_AXIS));
+        fieldPanel.setBackground(new Color(240, 240, 240));
+        fieldPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        JLabel label = new JLabel(labelText);
+        label.setPreferredSize(new Dimension(250, 20));
 
-    private void createDashboardPanel(JPanel dashboardPanel) {
+        JLabel sampleLabel = new JLabel(sampleText);
+        sampleLabel.setForeground(Color.GRAY);
+        sampleLabel.setFont(new Font("Arial", Font.ITALIC, 12));
 
-        dashboardPanel.setLayout(new BorderLayout(0, 20));
-        dashboardPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        dashboardPanel.setBackground(Color.WHITE);
-        dashboardPanel.setPreferredSize(new Dimension(700, dashboardPanel.getPreferredSize().height));
-
-
-        // Check if currentUser is initialized
-        if (currentUser == null) {
-            // Show error or login panel instead
-            JLabel errorLabel = new JLabel("Please log in to view your dashboard", JLabel.CENTER);
-            errorLabel.setFont(new Font("Arial", Font.BOLD, 18));
-            dashboardPanel.add(errorLabel, BorderLayout.CENTER);
-            mainPanel.add(dashboardPanel, "dashboard");
-            return;
+        if (inputComponent instanceof JTextField) {
+            inputComponent.setMaximumSize(new Dimension(150, 30));
+            inputComponent.setPreferredSize(new Dimension(150, 30));
+        } else if (inputComponent instanceof JComboBox) {
+            inputComponent.setMaximumSize(new Dimension(150, 30));
+            inputComponent.setPreferredSize(new Dimension(150, 30));
         }
 
-        // Check if taskManager is initialized
-        if (taskManager == null) {
-            taskManager = new TaskManager();
-        }
+        fieldPanel.add(label);
+        fieldPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        fieldPanel.add(inputComponent);
+        fieldPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        fieldPanel.add(sampleLabel);
 
-        // Header
-        JPanel headerPanel = createHeaderPanel();
-
-        // Dashboard Content
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BorderLayout(0, 30));
-        contentPanel.setBackground(Color.WHITE);
-
-        // Dashboard Title
-        JLabel dashboardTitle = new JLabel("My Dashboard");
-        dashboardTitle.setFont(new Font("Arial", Font.BOLD, 28));
-        contentPanel.add(dashboardTitle, BorderLayout.NORTH);
-
-        // Task Sections
-        JPanel taskSectionsPanel = new JPanel();
-        taskSectionsPanel.setLayout(new BorderLayout(20, 20));
-        taskSectionsPanel.setBackground(Color.WHITE);
-
-        // Tabs and badges panel
-        JPanel tabsPanel = new JPanel();
-        tabsPanel.setLayout(new BorderLayout());
-        tabsPanel.setBackground(Color.WHITE);
-
-        // Tabs
-        JPanel taskTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
-        taskTabs.setBackground(Color.WHITE);
-
-        JLabel allTasksTab = new JLabel("All Tasks");
-        allTasksTab.setFont(new Font("Arial", Font.BOLD, 14));
-        allTasksTab.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLACK));
-
-        JLabel favoriteTab = new JLabel("Favorite");
-        favoriteTab.setFont(new Font("Arial", Font.PLAIN, 14));
-
-        // Make tabs clickable
-        allTasksTab.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                allTasksTab.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLACK));
-                allTasksTab.setFont(new Font("Arial", Font.BOLD, 14));
-                favoriteTab.setBorder(null);
-                favoriteTab.setFont(new Font("Arial", Font.PLAIN, 14));
-                refreshDashboard(false);
-            }
-        });
-
-        favoriteTab.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                favoriteTab.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLACK));
-                favoriteTab.setFont(new Font("Arial", Font.BOLD, 14));
-                allTasksTab.setBorder(null);
-                allTasksTab.setFont(new Font("Arial", Font.PLAIN, 14));
-                refreshDashboard(true);
-            }
-        });
-
-        taskTabs.add(allTasksTab);
-        taskTabs.add(favoriteTab);
-
-        // Badges Label
-        JLabel badgesLabel = new JLabel("Badges");
-        badgesLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-        tabsPanel.add(taskTabs, BorderLayout.WEST);
-        tabsPanel.add(badgesLabel, BorderLayout.EAST);
-        tabsPanel.add(new JSeparator(), BorderLayout.SOUTH);
-
-        // Main tasks panel
-        JPanel mainTasksPanel = new JPanel();
-        mainTasksPanel.setLayout(new BorderLayout(20, 0));
-        mainTasksPanel.setBackground(Color.WHITE);
-
-        // Tasks List Panel with scroll capability
-        JPanel tasksListPanel = new JPanel();
-        tasksListPanel.setLayout(new BoxLayout(tasksListPanel, BoxLayout.Y_AXIS));
-        tasksListPanel.setBackground(Color.WHITE);
-
-        // Wrap in scroll pane for many tasks
-        JScrollPane scrollPane = new JScrollPane(tasksListPanel);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setBackground(Color.WHITE);
-
-        try {
-            // Safely fetch tasks from TaskManager
-            List<Task> taskLibrary = taskManager.getTaskLibrary();
-
-            if (taskLibrary != null && !taskLibrary.isEmpty()) {
-                // Current Tasks
-                JPanel currentTasksPanel = createTasksSection("Daily Tasks", taskLibrary.stream()
-                        .filter(task -> "daily".equals(task.getType()))
-                        .limit(3)
-                        .collect(Collectors.toList()));
-
-                // Explore Tasks Section
-                JPanel exploreSection = createTasksSection("Explore Tasks", taskLibrary.stream()
-                        .filter(task -> !"daily".equals(task.getType()))
-                        .limit(3)
-                        .collect(Collectors.toList()));
-
-                tasksListPanel.add(currentTasksPanel);
-                tasksListPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-                tasksListPanel.add(exploreSection);
-            } else {
-                // Handle empty task library
-                JLabel noTasksLabel = new JLabel("No tasks available", JLabel.CENTER);
-                noTasksLabel.setFont(new Font("Arial", Font.ITALIC, 16));
-                tasksListPanel.add(noTasksLabel);
-            }
-        } catch (Exception e) {
-            // Log the error
-            System.err.println("Error loading tasks: " + e.getMessage());
-            e.printStackTrace();
-
-            // Show error message in the UI
-            JLabel errorLabel = new JLabel("Error loading tasks. Please try again.", JLabel.CENTER);
-            errorLabel.setFont(new Font("Arial", Font.ITALIC, 16));
-            tasksListPanel.add(errorLabel);
-        }
-
-        // Add a "Personalized Actions" button that takes you to the tasks page
-        JPanel actionsButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        actionsButtonPanel.setBackground(Color.WHITE);
-
-        JButton personalizedActionsButton = new JButton("PERSONALIZED ACTIONS");
-        personalizedActionsButton.setBackground(UIConstants.BUTTON_BLUE);
-        personalizedActionsButton.setForeground(Color.WHITE);
-        personalizedActionsButton.setFont(UIConstants.BUTTON_FONT);
-        personalizedActionsButton.setFocusPainted(false);
-        personalizedActionsButton.setBorderPainted(false);
-        personalizedActionsButton.addActionListener(e -> {
-            try {
-                refreshTasksPanel(); // Refresh tasks before showing the panel
-                cardLayout.show(mainPanel, "tasks");
-            } catch (Exception ex) {
-                // Show error dialog if something goes wrong
-                JOptionPane.showMessageDialog(dashboardPanel,
-                        "Error loading tasks page: " + ex.getMessage(),
-                        "Error", JOptionPane.ERROR_MESSAGE);
-                ex.printStackTrace();
-            }
-        });
-
-        actionsButtonPanel.add(personalizedActionsButton);
-        tasksListPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        tasksListPanel.add(actionsButtonPanel);
-
-        // Badges Panel
-        JPanel badgesPanel = createBadgesPanel();
-
-        mainTasksPanel.add(scrollPane, BorderLayout.CENTER);
-        mainTasksPanel.add(badgesPanel, BorderLayout.EAST);
-
-        taskSectionsPanel.add(tabsPanel, BorderLayout.NORTH);
-        taskSectionsPanel.add(mainTasksPanel, BorderLayout.CENTER);
-
-        contentPanel.add(taskSectionsPanel, BorderLayout.CENTER);
-
-        // Add footer separator
-        JPanel footerPanel = new JPanel();
-        footerPanel.setBackground(Color.WHITE);
-        footerPanel.add(new JSeparator());
-
-        // Main layout assembly
-        dashboardPanel.add(headerPanel, BorderLayout.NORTH);
-        dashboardPanel.add(contentPanel, BorderLayout.CENTER);
-        dashboardPanel.add(footerPanel, BorderLayout.SOUTH);
-
-    }
-
-    // Helper method to create a task section with title and tasks
-    private JPanel createTasksSection(String title, List<Task> tasks) {
-        JPanel section = new JPanel();
-        section.setLayout(new BorderLayout(0, 15));
-        section.setBackground(Color.WHITE);
-
-        JLabel sectionTitle = new JLabel(title);
-        sectionTitle.setFont(new Font("Arial", Font.BOLD, 22));
-        section.add(sectionTitle, BorderLayout.NORTH);
-
-        if (tasks.isEmpty()) {
-            JLabel noTasksLabel = new JLabel("No " + title.toLowerCase() + " available", JLabel.CENTER);
-            noTasksLabel.setFont(new Font("Arial", Font.ITALIC, 14));
-            section.add(noTasksLabel, BorderLayout.CENTER);
-            return section;
-        }
-
-        JPanel taskCards = new JPanel();
-        taskCards.setLayout(new GridLayout(1, Math.min(tasks.size(), 3), 10, 0));
-        taskCards.setBackground(Color.WHITE);
-
-        // Create icon background colors based on task type
-        Map<String, Color> typeColors = new HashMap<>();
-        typeColors.put("daily", new Color(200, 230, 200));
-        typeColors.put("weekly", new Color(255, 220, 150));
-        typeColors.put("monthly", new Color(200, 220, 240));
-        typeColors.put("one-time", new Color(230, 200, 230));
-
-        // Create emoji icons based on task title/keywords
-        Map<String, String> keywordEmojis = new HashMap<>();
-        keywordEmojis.put("recycle", "♻️");
-        keywordEmojis.put("water", "💧");
-        keywordEmojis.put("light", "💡");
-        keywordEmojis.put("plant", "🌱");
-        keywordEmojis.put("tree", "🌳");
-        keywordEmojis.put("bike", "🚲");
-        keywordEmojis.put("walk", "🚶");
-        keywordEmojis.put("bag", "🛍️");
-        // Default emoji
-        String defaultEmoji = "🌐";
-
-        for (Task task : tasks) {
-            // Find appropriate emoji
-            String emoji = defaultEmoji;
-            for (Map.Entry<String, String> entry : keywordEmojis.entrySet()) {
-                if (task.getTitle().toLowerCase().contains(entry.getKey())) {
-                    emoji = entry.getValue();
-                    break;
-                }
-            }
-
-            // Get color based on type, default to light gray
-            Color iconColor = typeColors.getOrDefault(task.getType(), new Color(220, 220, 220));
-
-            // Create task card with proper completion status
-            String taskKey = currentUser.getEmail() + "_" + task.getId();
-            boolean isCompleted = taskManager.isTaskCompleted(taskKey);
-
-            JPanel taskCard = createTaskCard(
-                    task.getTitle(),
-                    task.getDescription(),
-                    isCompleted,
-                    createIconPanel(iconColor, emoji)
-            );
-
-            // Make task card clickable to mark as complete
-            taskCard.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (!isCompleted) {
-                        int result = JOptionPane.showConfirmDialog(
-                                taskCard,
-                                "Mark this task as complete?",
-                                "Complete Task",
-                                JOptionPane.YES_NO_OPTION
-                        );
-
-                        if (result == JOptionPane.YES_OPTION) {
-                            taskManager.completeTask(taskKey, currentUser);
-                            refreshDashboard(false);
-                        }
-                    }
-                }
-            });
-
-            taskCards.add(taskCard);
-        }
-
-        section.add(taskCards, BorderLayout.CENTER);
-        return section;
-    }
-
-    // Helper method to refresh the dashboard
-    private void refreshDashboard(boolean favoritesOnly) {
-        // Remove the current dashboard panel
-        Component[] components = mainPanel.getComponents();
-        for (int i = 0; i < components.length; i++) {
-            if (components[i].getName() != null && components[i].getName().equals("dashboard")) {
-                mainPanel.remove(i);
-                break;
-            }
-        }
-
-        // Show the dashboard
-        cardLayout.show(mainPanel, "dashboard");
-        mainPanel.revalidate();
-        mainPanel.repaint();
+        panel.add(fieldPanel);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
     }
 
     private void createLoginPanel() {
@@ -816,7 +680,7 @@ public class EcoSparkApp extends JFrame {
     }
 
     private void createRegisterPanel() {
-        getContentPane().remove(scrollPane);  // Remove the current screen
+        getContentPane().remove(scrollPane);
 
         // Make the register panel
         JPanel registerPanel = new JPanel();
@@ -916,14 +780,12 @@ public class EcoSparkApp extends JFrame {
         });
 
         backButton.addActionListener(e -> {
-            // Remove login panel and restore main panel
             getContentPane().remove(registerPanel);
             getContentPane().add(scrollPane);
             revalidate();
             repaint();
         });
 
-        // Add the panel to the content pane
         getContentPane().add(registerPanel);
         setVisible(true);
     }
@@ -1106,27 +968,10 @@ public class EcoSparkApp extends JFrame {
         navPanel.setMaximumSize(new Dimension(800, 70));
         navPanel.setPreferredSize(new Dimension(800, 70));
 
+        // EcoSpark Header - only this text now
         JLabel logoLabel = new JLabel("EcoSpark");
-        logoLabel.setFont(UIConstants.BODY_FONT);
-
         logoLabel.setFont(new Font("Arial", Font.BOLD, 20));
         logoLabel.setBorder(new EmptyBorder(0, 20, 0, 0));
-
-        // Navigation items
-        JPanel navItems = new JPanel();
-        navItems.setLayout(new FlowLayout(FlowLayout.CENTER));
-        navItems.setBackground(Color.WHITE);
-
-        String[] navLabels = {"Dashboard", "Contact", "About", "My Carbon Footprint", "Tasks"};
-        for (String label : navLabels) {
-            JButton navButton = new JButton(label);
-            navButton.setBorderPainted(false);
-            navButton.setContentAreaFilled(false);
-            navButton.setFocusPainted(false);
-            navButton.setFont(UIConstants.BODY_FONT);
-            navButton.setForeground(UIConstants.TEXT_COLOR);
-            navItems.add(navButton);
-        }
 
         // Profile icon
         JPanel profilePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -1134,7 +979,7 @@ public class EcoSparkApp extends JFrame {
 
         JButton profileButton = new JButton();
         try {
-            ImageIcon profileIcon = new ImageIcon(new ImageIcon(getClass().getResource("/com/hillcrest/visuals/profile_icon.png"))
+            ImageIcon profileIcon = new ImageIcon(new ImageIcon(getClass().getResource("/com/hillcrest/visuals/profile.png"))
                     .getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
             profileButton.setIcon(profileIcon);
         } catch (Exception e) {
@@ -1161,8 +1006,8 @@ public class EcoSparkApp extends JFrame {
 
         profilePanel.add(profileButton);
 
+        // Add EcoSpark logo to the left, and the profile icon to the right
         navPanel.add(logoLabel, BorderLayout.WEST);
-        navPanel.add(navItems, BorderLayout.CENTER);
         navPanel.add(profilePanel, BorderLayout.EAST);
 
         // Add separator line
@@ -1178,6 +1023,7 @@ public class EcoSparkApp extends JFrame {
 
         mainPanel.add(navContainer);
     }
+
 
     private void createProfileEditPanel() {
         getContentPane().remove(scrollPane);
@@ -1298,224 +1144,6 @@ public class EcoSparkApp extends JFrame {
         repaint();
     }
 
-    private JPanel createHeaderPanel() {
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-
-        JLabel logoLabel = new JLabel("EcoSpark");
-        logoLabel.setFont(new Font("Arial", Font.BOLD, 24));
-
-        JPanel navPanel = new JPanel();
-        navPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 20, 0));
-        navPanel.setBackground(Color.WHITE);
-
-        String[] navItems = {"Dashboard", "Contact", "About", "My Carbon Footprint", "Tasks"};
-        for (String item : navItems) {
-            JLabel navItem = new JLabel(item);
-            navItem.setFont(new Font("Arial", Font.PLAIN, 14));
-
-            // Make the Dashboard and Tasks labels clickable
-            if (item.equals("Dashboard") || item.equals("Tasks")) {
-                navItem.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                navItem.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        if (item.equals("Dashboard")) {
-                            cardLayout.show(mainPanel, "dashboard");
-                        } else if (item.equals("Tasks")) {
-                            refreshTasksPanel();
-                            cardLayout.show(mainPanel, "tasks");
-                        }
-                    }
-
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        navItem.setForeground(UIConstants.BUTTON_BLUE);
-                    }
-
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        navItem.setForeground(Color.BLACK);
-                    }
-                });
-            }
-
-            navPanel.add(navItem);
-        }
-
-        // Profile icon
-        JLabel profileIcon = new JLabel("👤");
-        profileIcon.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1, true));
-        profileIcon.setPreferredSize(new Dimension(30, 30));
-        profileIcon.setHorizontalAlignment(SwingConstants.CENTER);
-        navPanel.add(profileIcon);
-
-        headerPanel.add(logoLabel, BorderLayout.WEST);
-        headerPanel.add(navPanel, BorderLayout.EAST);
-        headerPanel.add(new JSeparator(), BorderLayout.SOUTH);
-
-        return headerPanel;
-    }
-
-    private JPanel createBadgesPanel() {
-        JPanel badgesPanel = new JPanel();
-        badgesPanel.setPreferredSize(new Dimension(250, 0));
-        badgesPanel.setBackground(Color.LIGHT_GRAY);
-        badgesPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        // Create a grid layout for badges
-        badgesPanel.setLayout(new GridLayout(4, 3, 10, 10));
-
-        // Colors for badges
-        Color[] badgeColors = {
-                new Color(220, 220, 255),  // Light blue
-                new Color(200, 240, 200),  // Light green
-                new Color(255, 240, 200),  // Light yellow
-                new Color(255, 200, 200),  // Light red
-                new Color(240, 200, 240),  // Light purple
-                new Color(200, 240, 240),  // Light cyan
-                new Color(255, 220, 180),  // Light orange
-                new Color(220, 255, 220),  // Pale green
-                new Color(255, 200, 220),  // Light pink
-                new Color(220, 220, 220),  // Light gray
-                new Color(255, 240, 180),  // Pale yellow
-                new Color(200, 220, 255)   // Pale blue
-        };
-
-        // Icons for badges
-        String[] icons = {
-                "🤝", "🧩", "🧠", "⚙️", "📚", "❓", "🌱", "🏆", "🔄"
-        };
-
-        // Add 9 badges
-        for (int i = 0; i < 9; i++) {
-            JPanel badge = new JPanel();
-            badge.setBackground(badgeColors[i]);
-            badge.setBorder(BorderFactory.createLineBorder(badgeColors[i].darker(), 1));
-
-            JLabel iconLabel = new JLabel(icons[i]);
-            iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            iconLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-
-            badge.add(iconLabel);
-            badgesPanel.add(badge);
-        }
-
-        return badgesPanel;
-    }
-
-    // Implementation of the Tasks panel that users navigate to from the Dashboard
-    private void createTasksPanel() {
-        JPanel tasksPanel = new JPanel(new BorderLayout());
-        tasksPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        tasksPanel.setBackground(Color.WHITE);
-
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-
-        JLabel titleLabel = new JLabel("Eco-Friendly Tasks");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-
-        JButton backButton = new JButton("Back to Dashboard");
-        backButton.setBackground(UIConstants.BUTTON_BLUE);
-        backButton.setForeground(Color.WHITE);
-        backButton.setFont(new Font("Arial", Font.BOLD, 12));
-        backButton.setFocusPainted(false);
-        backButton.addActionListener(e -> cardLayout.show(mainPanel, "dashboard"));
-        headerPanel.add(backButton, BorderLayout.EAST);
-
-        // User stats panel (points, completed tasks, etc.)
-        JPanel statsPanel = new JPanel();
-        statsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        statsPanel.setBackground(Color.WHITE);
-        statsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        JLabel pointsLabel = new JLabel("Your Points: " + currentUser.getPoints());
-        pointsLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        pointsLabel.setForeground(UIConstants.ACCENT_COLOR);
-
-        JLabel tasksCompletedLabel = new JLabel(" | Tasks Completed: " +
-                countCompletedTasks());
-        tasksCompletedLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-        statsPanel.add(pointsLabel);
-        statsPanel.add(tasksCompletedLabel);
-
-        // Combine header elements
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(Color.WHITE);
-        topPanel.add(headerPanel, BorderLayout.NORTH);
-        topPanel.add(statsPanel, BorderLayout.CENTER);
-        topPanel.add(new JSeparator(), BorderLayout.SOUTH);
-
-        tasksListPanel = new JPanel();
-        tasksListPanel.setLayout(new BoxLayout(tasksListPanel, BoxLayout.Y_AXIS));
-        tasksListPanel.setBackground(Color.WHITE);
-
-        JScrollPane scrollPane = new JScrollPane(tasksListPanel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-        tasksPanel.add(topPanel, BorderLayout.NORTH);
-        tasksPanel.add(scrollPane, BorderLayout.CENTER);
-
-        mainPanel.add(tasksPanel, "tasks");
-    }
-
-    private void refreshTasksPanel() {
-        if (tasksListPanel == null) {
-            System.err.println("Error: tasksListPanel is not initialized.");
-            return;
-        }
-
-        tasksListPanel.removeAll();
-
-        // Get tasks from Task class library
-        List<Task> taskLibrary = Task.createTaskLibrary();
-        if (taskLibrary == null || taskLibrary.isEmpty()) {
-            System.err.println("Error: Task library is null or empty.");
-            return;
-        }
-
-        // Create category panels
-        JPanel dailyTasksPanel = createCategoryPanel("Daily Actions");
-        JPanel weeklyTasksPanel = createCategoryPanel("Weekly Challenges");
-
-        // Use an iterator to safely process tasks without direct indexing
-        Iterator<Task> taskIterator = taskLibrary.iterator();
-        int count = 0;
-
-        while (taskIterator.hasNext()) {
-            Task task = taskIterator.next();
-            JPanel taskItem = createTaskItem(task);
-
-            if (taskItem != null) {
-                if (count < 5) {
-                    dailyTasksPanel.add(taskItem);
-                } else {
-                    weeklyTasksPanel.add(taskItem);
-                }
-            } else {
-                System.err.println("Warning: Failed to create task item for " + task.getTitle());
-            }
-            count++;
-        }
-
-        // Add category panels to the main tasks panel
-        tasksListPanel.add(dailyTasksPanel);
-        tasksListPanel.add(Box.createVerticalStrut(20)); // Adds spacing between sections
-        tasksListPanel.add(weeklyTasksPanel);
-
-        // Refresh the UI
-        tasksListPanel.revalidate();
-        tasksListPanel.repaint();
-    }
-
-    /**
-     * Utility method to create a category panel with a title.
-     */
     private JPanel createCategoryPanel(String title) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -1545,130 +1173,6 @@ public class EcoSparkApp extends JFrame {
 
         iconPanel.add(icon, BorderLayout.CENTER);
         return iconPanel;
-    }
-
-    private JPanel createTaskCard(String title, String description, boolean completed, JPanel iconPanel) {
-        JPanel taskPanel = new JPanel();
-        taskPanel.setLayout(new BorderLayout(10, 0));
-        taskPanel.setBackground(Color.LIGHT_GRAY);
-        taskPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BorderLayout(5, 5));
-        contentPanel.setBackground(Color.LIGHT_GRAY);
-
-        // Checkbox with text
-        JPanel checkboxPanel = new JPanel(new BorderLayout(10, 0));
-        checkboxPanel.setBackground(Color.LIGHT_GRAY);
-
-        JCheckBox checkbox = new JCheckBox();
-        checkbox.setSelected(completed);
-        checkbox.setBackground(Color.LIGHT_GRAY);
-
-        if (completed) {
-            JLabel checkmark = new JLabel("✓");
-            checkmark.setForeground(UIConstants.GREEN_CHECK);
-            checkmark.setFont(new Font("Arial", Font.BOLD, 14));
-            checkboxPanel.add(checkmark, BorderLayout.WEST);
-        } else {
-            checkboxPanel.add(checkbox, BorderLayout.WEST);
-        }
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        checkboxPanel.add(titleLabel, BorderLayout.CENTER);
-
-        // Description
-        JTextArea descriptionArea = new JTextArea(description);
-        descriptionArea.setWrapStyleWord(true);
-        descriptionArea.setLineWrap(true);
-        descriptionArea.setEditable(false);
-        descriptionArea.setBackground(Color.LIGHT_GRAY);
-        descriptionArea.setFont(new Font("Arial", Font.PLAIN, 12));
-        descriptionArea.setBorder(null);
-
-        contentPanel.add(checkboxPanel, BorderLayout.NORTH);
-        contentPanel.add(descriptionArea, BorderLayout.CENTER);
-
-        taskPanel.add(contentPanel, BorderLayout.CENTER);
-        taskPanel.add(iconPanel, BorderLayout.EAST);
-
-        return taskPanel;
-    }
-
-    private JPanel createTaskPanel(JPanel... tasks) {
-        JPanel taskPanel = new JPanel();
-        taskPanel.setLayout(new BoxLayout(taskPanel, BoxLayout.Y_AXIS));
-        taskPanel.setBackground(Color.WHITE);
-
-        for (int i = 0; i < tasks.length; i++) {
-            taskPanel.add(tasks[i]);
-            if (i < tasks.length - 1) {
-                taskPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-            }
-        }
-
-        return taskPanel;
-    }
-
-    private int countCompletedTasks() {
-        int count = 0;
-        for (Boolean completed : taskCompletionStatus.values()) {
-            if (completed) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private JPanel createTaskItem(Task task) {
-        JPanel taskPanel = new JPanel(new BorderLayout());
-        taskPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
-                BorderFactory.createEmptyBorder(10, 5, 10, 5)
-        ));
-
-        JPanel taskInfoPanel = new JPanel();
-        taskInfoPanel.setLayout(new BoxLayout(taskInfoPanel, BoxLayout.Y_AXIS));
-
-        JLabel taskTitleLabel = new JLabel(task.getTitle());
-        taskTitleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-        JLabel taskDescLabel = new JLabel(task.getDescription());
-        taskDescLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-
-        taskInfoPanel.add(taskTitleLabel);
-        taskInfoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        taskInfoPanel.add(taskDescLabel);
-
-        String taskKey = (currentUser != null) ? currentUser.getEmail() + "_" + task.getId() : String.valueOf(task.getId());
-        boolean isCompleted = taskCompletionStatus.getOrDefault(taskKey, false);
-
-        JButton actionButton = new JButton(isCompleted ? "Completed" : "Mark as Completed");
-        if (isCompleted) {
-            actionButton.setBackground(new Color(144, 238, 144)); // Light green
-            actionButton.setEnabled(false);
-        }
-
-        actionButton.addActionListener(e -> {
-            if (currentUser == null) {
-                JOptionPane.showMessageDialog(frame, "Please log in to track task completion");
-                return;
-            }
-
-            taskCompletionStatus.put(taskKey, true);
-            actionButton.setText("Completed");
-            actionButton.setBackground(new Color(144, 238, 144)); // Light green
-            actionButton.setEnabled(false);
-
-            // Add point system or rewards here if needed
-            JOptionPane.showMessageDialog(frame, "Great job! You've completed this eco-task!");
-        });
-
-        taskPanel.add(taskInfoPanel, BorderLayout.CENTER);
-        taskPanel.add(actionButton, BorderLayout.EAST);
-
-        return taskPanel;
     }
 
     private void createQuizPanel() {
@@ -1744,7 +1248,7 @@ public class EcoSparkApp extends JFrame {
         offerPanel.setLayout(new BoxLayout(offerPanel, BoxLayout.Y_AXIS));
         offerPanel.setBackground(Color.WHITE);
         offerPanel.setBorder(new EmptyBorder(20, 40, 40, 40));
-        offerPanel.setMaximumSize(new Dimension(900, 450)); // Keep it within the frame
+        offerPanel.setMaximumSize(new Dimension(900, 600)); // Keep it within the frame
 
         JLabel offerTitle = new JLabel("What We Offer");
         offerTitle.setFont(UIConstants.HEADER_FONT);
@@ -1755,26 +1259,46 @@ public class EcoSparkApp extends JFrame {
         offerCards.setBackground(Color.WHITE);
         offerCards.setMaximumSize(new Dimension(900, 835)); // Ensures centering
 
-        // Create Offer Buttons (Only images, no text on them)
-        JButton carbonFootprintButton = createImageButton(
+        JPanel carbonFootprintButton = createImageButton(
                 "/com/hillcrest/visuals/carbon_footprint_button_graphic.png",
-                e -> System.out.println("Carbon Footprint Calculator clicked!") // Replace with actual action
+                "Calculate carbon footprint",
+                e -> {
+                    if (dashboardPanel == null) {
+                        dashboardPanel = new DashboardPanel(model);
+                    }
+
+                    // If you're using CardLayout for navigation
+                    if (cardLayout != null && frame != null) {
+                        cardLayout.show(frame, "dashboard");
+                    } else {
+                        // Alternative approach: create and show a new dashboard window
+                        if (dashboardFrame == null) {
+                            dashboardFrame = new JFrame("EcoSpark Dashboard");
+                            dashboardFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                            dashboardFrame.setSize(900, 700);
+                            dashboardFrame.setLocationRelativeTo(null);
+                            dashboardFrame.getContentPane().add(dashboardPanel);
+                        }
+                        dashboardFrame.setVisible(true);
+                    }
+                }
         );
 
-        JButton resourcesButton = createImageButton(
-                "/com/hillcrest/visuals/informative_resources_buttonn_graphic.png",
-                e -> System.out.println("Informative Resources clicked!") // Replace with actual action
+        JPanel quizButton = createImageButton(
+                "/com/hillcrest/visuals/informative_resources_button_graphic.png",
+                "Test your knowledge",
+                e -> System.out.println("Informative Resources clicked!")
         );
 
-        JButton actionsButton = createImageButton(
+        JPanel actionsButton = createImageButton(
                 "/com/hillcrest/visuals/take_action.png",
+                "Take personalized actions",
                 e -> createCarbonFootprintPanel()
         );
 
-
         // Add buttons to the panel
         offerCards.add(carbonFootprintButton);
-        offerCards.add(resourcesButton);
+        offerCards.add(quizButton);
         offerCards.add(actionsButton);
 
         offerPanel.add(offerTitle);
@@ -1785,7 +1309,13 @@ public class EcoSparkApp extends JFrame {
     }
 
     // Helper method to create an image button
-    private JButton createImageButton(String imagePath, ActionListener action) {
+    private JPanel createImageButton(String imagePath, String title, ActionListener action) {
+        // Create a panel to hold the button and title
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout()); // Use BorderLayout to easily position components
+        panel.setBackground(Color.WHITE); // Set the background color to white
+
+        // Create the button with the image
         JButton button = new JButton();
         button.setFocusPainted(false);
         button.setBorderPainted(false);
@@ -1793,16 +1323,39 @@ public class EcoSparkApp extends JFrame {
         button.setPreferredSize(new Dimension(250, 250)); // Keep buttons uniform
 
         try {
-            ImageIcon icon = new ImageIcon(new ImageIcon(getClass().getResource(imagePath))
-                    .getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH)); // Maintain aspect ratio
+            ImageIcon originalIcon = new ImageIcon(getClass().getResource(imagePath));
+            Image originalImage = originalIcon.getImage();
+
+            // Calculate the scaled width and height while maintaining aspect ratio
+            int originalWidth = originalImage.getWidth(null);
+            int originalHeight = originalImage.getHeight(null);
+
+            // Calculate new dimensions based on max width or height (in this case 200px)
+            int newWidth = 200;
+            int newHeight = (int) ((double) originalHeight / originalWidth * newWidth);
+
+            // Scale the image while maintaining aspect ratio
+            ImageIcon icon = new ImageIcon(originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_AREA_AVERAGING));
             button.setIcon(icon);
         } catch (Exception e) {
             System.err.println("Image not found: " + imagePath);
         }
 
         button.addActionListener(action);
-        return button;
+
+        // Create a label for the title
+        JLabel titleLabel = new JLabel(title, JLabel.CENTER); // Title centered below the image
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14)); // Set title font style and size
+        titleLabel.setPreferredSize(new Dimension(250, 30)); // Set label size to fit title
+
+        // Add button and title to the panel
+        panel.add(button, BorderLayout.CENTER);
+        panel.add(titleLabel, BorderLayout.SOUTH);
+
+        return panel;
     }
+
+
 
 
     private JPanel createOfferCard(String title, String imagePath, Color backgroundColor) {
@@ -1869,8 +1422,6 @@ public class EcoSparkApp extends JFrame {
         card.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (title.equals("Personalized Actions")) {
-                    // Navigate to the tasks panel
-                    refreshTasksPanel(); // Refresh tasks before showing the panel
                     cardLayout.show(mainPanel, "tasks");
                 } else if (title.equals("Carbon Footprint Calculator")) {
                     // Navigate to the carbon footprint panel (if implemented)
@@ -1930,7 +1481,7 @@ public class EcoSparkApp extends JFrame {
         aboutPanel.setLayout(new BoxLayout(aboutPanel, BoxLayout.X_AXIS));
         aboutPanel.setBackground(Color.WHITE);
         aboutPanel.setBorder(new EmptyBorder(40, 40, 40, 40));
-        aboutPanel.setMaximumSize(new Dimension(800, 350));
+        aboutPanel.setMaximumSize(new Dimension(800, 400));
 
         // Text section
         JPanel textPanel = new JPanel();
@@ -1998,7 +1549,7 @@ public class EcoSparkApp extends JFrame {
         JLabel imageLabel = new JLabel();
         try {
             ImageIcon aboutGraphic = new ImageIcon(new ImageIcon(getClass().getResource("/com/hillcrest/visuals/about_ecospark_graphic.png"))
-                    .getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH));
+                    .getImage().getScaledInstance(200, 200, Image.SCALE_AREA_AVERAGING));
             imageLabel.setIcon(aboutGraphic);
         } catch (Exception e) {
             imageLabel.setText("About Graphic");
