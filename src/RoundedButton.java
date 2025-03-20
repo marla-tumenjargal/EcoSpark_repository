@@ -2,6 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.InputStream;
 
+/**
+ * Custom JButton implementation with rounded edges.
+ */
 public class RoundedButton extends JButton {
     private static final int BORDER_ROUNDING = 10;
     private static final int ARC_HEIGHT = 10;
@@ -37,6 +40,13 @@ public class RoundedButton extends JButton {
         }
     }
 
+    /**
+     * Constructs a RoundedButton with specified text and colors.
+     *
+     * @param text Button's text.
+     * @param bgColor Background color.
+     * @param fgColor foreground color.
+     */
     public RoundedButton(String text, Color bgColor, Color fgColor) {
         super(text);
         setBackground(bgColor);
@@ -48,6 +58,10 @@ public class RoundedButton extends JButton {
         setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
     }
 
+    /**
+     * Overriden paintComponent(Graphics g) method - standard
+     * @param g the <code>Graphics</code> object to protect
+     */
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();

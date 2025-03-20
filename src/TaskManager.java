@@ -1,14 +1,24 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages ecofriendly tasks and stores them by how often
+ * they can be completed
+ */
 public class TaskManager {
     private List<Task> taskLibrary;
 
+    /**
+     * Constructs new instance of TaskManager and initialized task library
+     */
     public TaskManager() {
         taskLibrary = new ArrayList<>();
         initializeTaskLibrary();
     }
 
+    /**
+     * Populates the task library with predefined eco-friendly tasks.
+     */
     private void initializeTaskLibrary() {
         taskLibrary.add(new Task("Recycle a water bottle", "Collect and properly recycle plastic water bottles.", 5, "daily"));
         taskLibrary.add(new Task("Use reusable bags", "Bring your own reusable bags when shopping.", 10, "daily"));
@@ -78,14 +88,29 @@ public class TaskManager {
 
     }
 
+    /**
+     * Getter, gets task library
+     * @return tasklibrary
+     */
     public List<Task> getTaskLibrary() {
         return taskLibrary;
     }
 
+    /**
+     * Returns true if the given task is completed
+     * @param user, user
+     * @param task, task user is completing
+     * @return
+     */
     public boolean isTaskCompleted(Profile user, Task task) {
         return user.isTaskCompleted(task);
     }
 
+    /**
+     * Adds the completed task to the user's profile
+     * @param user, user
+     * @param task, task
+     */
     public void completeTask(Profile user, Task task) {
         user.addCompletedTask(task);
     }

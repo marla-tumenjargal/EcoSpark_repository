@@ -27,10 +27,6 @@ public class EcoSparkApp extends JFrame {
 
     CarbonFootprintCalculator calculator = new CarbonFootprintCalculator();
 
-    private Map<String, String> userCredentials = new HashMap<>(); // Store user credentials (email -> password)
-    private Map<String, String> userNames = new HashMap<>(); // Store usernames (email -> name)
-    private Map<String, Profile> userProfiles = new HashMap<>(); // Store user profiles (email -> Profile)
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {

@@ -7,15 +7,27 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manages user profiles including storing profiles and authenticating
+ */
 class UserManager {
     private static final String DATA_FILE = "users.json";
     private Map<String, Profile> userProfiles;
 
+    /**
+     * Constructor, constructs new instance of the user manager and loads user data
+     */
     public UserManager() {
         userProfiles = new HashMap<>();
         loadData();
     }
 
+    /**
+     * Authenticates user with email and password
+     * @param email, user's email
+     * @param password, user's password
+     * @return true if authentication is successful
+     */
     public boolean authenticate(String email, String password) {
         if (userProfiles.containsKey(email)) {
             Profile profile = userProfiles.get(email);
@@ -24,37 +36,59 @@ class UserManager {
         return false;
     }
 
+    /**
+     * Checks if a user exists in the system.
+     *
+     * @param email The user's email.
+     * @return true if the user exists, false otherwise.
+     */
     public boolean userExists(String email) {
         return userProfiles.containsKey(email);
     }
 
+    /**
+     * Adds a new user profile
+     * @param profile, profile
+     */
     public void addUser(Profile profile) {
         userProfiles.put(profile.getEmail(), profile);
         saveData();
     }
 
+    /**
+     * Getter, gets email
+     * @param email
+     * @return
+     */
     public Profile getProfile(String email) {
         return userProfiles.get(email);
     }
 
+    /**
+     * Retrieves a user's profile.
+     * @param profile, profile
+     */
     public void updateProfile(Profile profile) {
         userProfiles.put(profile.getEmail(), profile);
         saveData();
     }
 
+    /**
+     * Saves user data to the JSON file.
+     */
     public void saveData() {
         try {
             JSONObject json = new JSONObject();
             JSONArray usersArray = new JSONArray();
 
             for (Profile profile : userProfiles.values()) {
-                usersArray.put(profile.toJSON()); // Ensure Profile has a toJSON method
+                usersArray.put(profile.toJSON());
             }
 
             json.put("users", usersArray);
 
             try (FileWriter file = new FileWriter(DATA_FILE)) {
-                file.write(json.toString(2)); // Pretty-print JSON for readability
+                file.write(json.toString(2));
             }
 
         } catch (IOException e) {
@@ -66,11 +100,13 @@ class UserManager {
         }
     }
 
+    /**
+     *Loads user data
+     */
     public void loadData() {
         File dataFile = new File(DATA_FILE);
 
         if (!dataFile.exists()) {
-            // No saved data yet
             return;
         }
 
@@ -101,12 +137,14 @@ class UserManager {
         }
     }
 
+    /**
+     * Deletes profile
+     * @param email
+     */
     public void deleteProfile(String email) {
         if (userProfiles.containsKey(email)) {
-            userProfiles.remove(email); // Remove the user from the map
-            saveData(); // Save the updated user data to the JSON file
-        } else {
-            System.out.println("User with email " + email + " not found.");
+            userProfiles.remove(email);
+            saveData();
         }
     }
 }

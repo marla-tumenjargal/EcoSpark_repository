@@ -3,6 +3,14 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+/**
+ * The DashboardPanel class is the main 'window' for the tasks that a user can complete.
+ * It displays tasks, badges, and progress information to allow users to interact with their tasks
+ * and track their achievements.
+ *
+ * The dashboard is divided into 1) the title section with the user's name, 2) the tasks panel showing
+ * all the tasks, 3) the badges panel, and 4) the "explore" tasks panel for discovering additional tasks.
+ */
 public class DashboardPanel extends JPanel {
     private ApplicationModel model;
     private TaskManager taskManager;
@@ -15,6 +23,12 @@ public class DashboardPanel extends JPanel {
     private Color primaryColor = new Color(33, 150, 83);
     private Map<String, Badge> badgeTypes = new HashMap<>();
 
+    /**
+     * Creates a DashboardPanel for the given application model and user profile.
+     *
+     * @param model, application data model.
+     * @param currentUser, logged-in user's profile.
+     */
     public DashboardPanel(ApplicationModel model, Profile currentUser) {
         this.model = model;
         this.taskManager = model.getTaskManager();
@@ -31,6 +45,10 @@ public class DashboardPanel extends JPanel {
         add(contentPanel, BorderLayout.CENTER);
     }
 
+    /**
+     * Builds the main dashboard content, including tasks, badges, and explore sections.
+     * @return The main content panel.
+     */
     private JPanel createDashboardContent() {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
@@ -41,7 +59,7 @@ public class DashboardPanel extends JPanel {
 
         JLabel titleLabel = new JLabel(currentUser.getName() + "'s Dashboard");
 
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        titleLabel.setFont(UIConstants.SUBHEADER_FONT);
         titlePanel.add(titleLabel, BorderLayout.WEST);
 
         mainPanel.add(titlePanel, BorderLayout.NORTH);
@@ -77,12 +95,16 @@ public class DashboardPanel extends JPanel {
         return mainPanel;
     }
 
+    /**
+     * Creates a panel to display tasks in tabs
+     * @return The tasks panel.
+     */
     private JPanel createTasksPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
 
         JTabbedPane tasksTabbedPane = new JTabbedPane();
-        tasksTabbedPane.setFont(new Font("Arial", Font.PLAIN, 14));
+        tasksTabbedPane.setFont(UIConstants.BODY_FONT);
 
         JPanel allTasksPanel = new JPanel();
         allTasksPanel.setLayout(new BoxLayout(allTasksPanel, BoxLayout.Y_AXIS));
@@ -103,8 +125,6 @@ public class DashboardPanel extends JPanel {
         allTasksScrollPane.getVerticalScrollBar().setUnitIncrement(30); // More sensitive scrolling
 
         tasksTabbedPane.addTab("All Tasks", allTasksScrollPane);
-
-        // Favorite Tasks Tab
         JPanel favoriteTasksPanel = new JPanel();
         favoriteTasksPanel.setLayout(new BoxLayout(favoriteTasksPanel, BoxLayout.Y_AXIS));
         favoriteTasksPanel.setBackground(Color.WHITE);
@@ -121,6 +141,11 @@ public class DashboardPanel extends JPanel {
         return panel;
     }
 
+    /**
+     * Creates a single task item for display in the tasks panel.
+     * @param task The task to display.
+     * @return The task item panel.
+     */
     private JPanel createTaskItem(Task task) {
         boolean isCompleted = taskManager.isTaskCompleted(currentUser, task);
 
@@ -148,15 +173,14 @@ public class DashboardPanel extends JPanel {
         textPanel.setBackground(Color.WHITE);
 
         JLabel titleLabel = new JLabel(task.getTitle());
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        titleLabel.setFont(UIConstants.BODY_FONT);
 
-        // Add points info to title
         JPanel titlePointsPanel = new JPanel(new BorderLayout());
         titlePointsPanel.setBackground(Color.WHITE);
         titlePointsPanel.add(titleLabel, BorderLayout.WEST);
 
         JLabel pointsValueLabel = new JLabel("+" + task.getPointsValue() + " pts");
-        pointsValueLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        pointsValueLabel.setFont(UIConstants.BODY_FONT);
         pointsValueLabel.setForeground(primaryColor);
         titlePointsPanel.add(pointsValueLabel, BorderLayout.EAST);
 
@@ -164,34 +188,24 @@ public class DashboardPanel extends JPanel {
         textPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
         JTextArea descriptionArea = new JTextArea(task.getDescription());
-        descriptionArea.setFont(new Font("Arial", Font.PLAIN, 12));
+        descriptionArea.setFont(UIConstants.BODY_FONT);
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setEditable(false);
         descriptionArea.setBackground(Color.WHITE);
 
         textPanel.add(descriptionArea);
-
-        // Task icon (using more colorful and task-specific icons)
         JPanel iconPanel = createColorfulTaskIcon(task.getType());
 
-        // Add to main panel
         taskPanel.add(statusCheckBox, BorderLayout.WEST);
         taskPanel.add(textPanel, BorderLayout.CENTER);
         taskPanel.add(iconPanel, BorderLayout.EAST);
 
         statusCheckBox.addActionListener(e -> {
             if (statusCheckBox.isSelected() && !isCompleted) {
-                // Complete the task
                 taskManager.completeTask(currentUser, task);
-
-                // Add points to user profile
                 currentUser.addPoints(task.getPointsValue());
-
-                // Check for new badges
                 List<Badge> newBadges = checkForNewBadges();
-
-                // Show completion message
                 String message = "Great job! You earned " + task.getPointsValue() + " points!";
                 if (!newBadges.isEmpty()) {
                     message += "\n\nYou've also earned new badges:";
@@ -199,31 +213,28 @@ public class DashboardPanel extends JPanel {
                         message += "\n- " + badge.getName() + " " + badge.getIcon();
                     }
                 }
-
                 JOptionPane.showMessageDialog(this,
                         message,
                         "Task Completed",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                // Refresh the badges panel
                 refreshBadgesPanel();
-
-                // Update points in header
                 refreshHeaderPoints();
-
-                // Save user data to JSON
                 userManager.saveData();
             }
         });
-
         return taskPanel;
     }
 
+    /**
+     * Creates a colorful icon for a task based on its type.
+     * @param taskType The type of the task.
+     * @return The task icon panel.
+     */
     private JPanel createColorfulTaskIcon(String taskType) {
         JPanel iconPanel = new JPanel(new BorderLayout());
         iconPanel.setPreferredSize(new Dimension(70, 70));
 
-        // Determine color and icon based on task type
         Color bgColor;
         String iconText;
 
@@ -267,20 +278,19 @@ public class DashboardPanel extends JPanel {
                 break;
         }
 
-        // Create rounded panel with icon
         JPanel colorPanel = new RoundedPanel(10, bgColor);
         colorPanel.setLayout(new GridBagLayout());
-
         JLabel iconLabel = new JLabel(iconText);
-        iconLabel.setFont(new Font("Arial", Font.PLAIN, 24));
+        iconLabel.setFont(UIConstants.SUBHEADER_FONT);
         colorPanel.add(iconLabel);
-
         iconPanel.add(colorPanel, BorderLayout.CENTER);
         return iconPanel;
     }
 
+    /**
+     * Updates the points displayed in the header.
+     */
     private void refreshHeaderPoints() {
-        // Find the points label in the header and update it
         Component[] headerComponents = getComponents();
         for (Component c : headerComponents) {
             if (c instanceof JPanel) {
@@ -305,14 +315,16 @@ public class DashboardPanel extends JPanel {
         }
     }
 
+    /**
+     * Checks if the user has earned any new badges.
+     * @return A list of new badges earned.
+     */
     private List<Badge> checkForNewBadges() {
         List<Badge> newBadges = new ArrayList<>();
         int currentPoints = currentUser.getPoints();
 
-        // Check point-based badges
         for (Badge badge : badgeTypes.values()) {
             if (badge.getPointsRequired() > 0) {
-                // If the user has enough points but doesn't have the badge yet
                 if (currentPoints >= badge.getPointsRequired() &&
                         !currentUser.hasBadge(badge.getName())) {
                     currentUser.addBadge(badge.getName());
@@ -320,43 +332,40 @@ public class DashboardPanel extends JPanel {
                 }
             }
         }
-
         return newBadges;
     }
 
+    /**
+     * Creates a button to display a badge.
+     * @param badge The badge to display.
+     * @param isEarned Whether the badge is earned.
+     * @return The badge button panel.
+     */
     private JPanel createBadgeButton(Badge badge, boolean isEarned) {
         JPanel badgeContainer = new JPanel(new BorderLayout(0, 5));
         badgeContainer.setBackground(Color.WHITE);
 
-        // Create the badge as a button so it can be clicked for more info
         JButton badgeButton = new JButton();
         badgeButton.setLayout(new GridBagLayout());
         badgeButton.setBorderPainted(false);
         badgeButton.setFocusPainted(false);
 
         if (isEarned) {
-            // Earned badge - show proper color and icon
             badgeButton.setBackground(badge.getColor());
-
-            // Display badge icon
             JLabel badgeIcon = new JLabel(badge.getIcon());
             badgeIcon.setFont(new Font("Dialog", Font.PLAIN, 24));
             badgeIcon.setForeground(Color.WHITE);
             badgeButton.add(badgeIcon);
         } else {
-            // Not earned - show question mark on a light gray background
             badgeButton.setBackground(new Color(220, 220, 220));
-
             JLabel questionMark = new JLabel("?");
-            questionMark.setFont(new Font("Arial", Font.BOLD, 24));
+            questionMark.setFont(UIConstants.SUBHEADER_FONT);
             questionMark.setForeground(Color.WHITE);
             badgeButton.add(questionMark);
         }
 
-        // Make the badge button a circle
         badgeButton.setPreferredSize(new Dimension(65, 65));
 
-        // Add action listener to show badge details when clicked
         badgeButton.addActionListener(e -> {
             String title = isEarned ? badge.getName() : "Locked Badge";
             String message = isEarned ?
@@ -365,11 +374,9 @@ public class DashboardPanel extends JPanel {
                             "Requires " + badge.getPointsRequired() + " points to unlock" :
                             "Complete special tasks to unlock this badge");
 
-            // Use a custom panel for the message dialog
             JPanel detailPanel = new JPanel(new BorderLayout(0, 10));
             detailPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            // Add icon at the top
             JPanel iconPanel = new JPanel();
             iconPanel.setBackground(isEarned ? badge.getColor() : new Color(220, 220, 220));
             JLabel iconLabel = new JLabel(isEarned ? badge.getIcon() : "?");
@@ -380,13 +387,12 @@ public class DashboardPanel extends JPanel {
 
             detailPanel.add(iconPanel, BorderLayout.NORTH);
 
-            // Add description
             JTextArea descArea = new JTextArea(message);
             descArea.setWrapStyleWord(true);
             descArea.setLineWrap(true);
             descArea.setEditable(false);
             descArea.setBackground(detailPanel.getBackground());
-            descArea.setFont(new Font("Arial", Font.PLAIN, 14));
+            descArea.setFont(UIConstants.BODY_FONT);
 
             detailPanel.add(descArea, BorderLayout.CENTER);
 
@@ -399,17 +405,16 @@ public class DashboardPanel extends JPanel {
         });
 
         badgeContainer.add(badgeButton, BorderLayout.CENTER);
-
-        // Add badge name below
         JLabel badgeLabel = new JLabel(isEarned ? badge.getName() : "???", JLabel.CENTER);
-        badgeLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+        badgeLabel.setFont(UIConstants.BODY_FONT);
         badgeContainer.add(badgeLabel, BorderLayout.SOUTH);
-
         return badgeContainer;
     }
 
+    /**
+     * Refreshes the badges panel to show updated badges and progress.
+     */
     private void refreshBadgesPanel() {
-        // Remove the current badges panel
         for (Component c : getComponents()) {
             if (c instanceof JPanel) {
                 JPanel panel = (JPanel) c;
@@ -428,11 +433,8 @@ public class DashboardPanel extends JPanel {
                 }
             }
         }
-
-        // Create a new badges panel
         badgesPanel = createBadgesPanel();
 
-        // Find and add to correct layout position
         for (Component c : getComponents()) {
             if (c instanceof JPanel) {
                 JPanel mainPanel = (JPanel) c;
@@ -460,6 +462,10 @@ public class DashboardPanel extends JPanel {
         }
     }
 
+    /**
+     * Creates a panel to explore additional tasks.
+     * @return The explore tasks panel.
+     */
     private JPanel createExploreTasksPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -470,7 +476,7 @@ public class DashboardPanel extends JPanel {
         titlePanel.setBackground(Color.WHITE);
 
         JLabel exploreTitleLabel = new JLabel("Explore Tasks:");
-        exploreTitleLabel.setFont(new Font("Arial", Font.BOLD, 22));
+        exploreTitleLabel.setFont(UIConstants.SUBHEADER_FONT);
         titlePanel.add(exploreTitleLabel, BorderLayout.WEST);
 
         panel.add(titlePanel, BorderLayout.NORTH);
@@ -497,7 +503,9 @@ public class DashboardPanel extends JPanel {
         return panel;
     }
 
-    // Class for rounded panels (used in the task icons)
+    /**
+     * A custom JPanel class for creating rounded corners.
+     */
     private class RoundedPanel extends JPanel {
         private int cornerRadius;
         private Color backgroundColor;
@@ -517,14 +525,14 @@ public class DashboardPanel extends JPanel {
             int height = getHeight();
             Graphics2D graphics = (Graphics2D) g;
             graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // Paint background
             graphics.setColor(backgroundColor);
             graphics.fillRoundRect(0, 0, width - 1, height - 1, arcs.width, arcs.height);
         }
     }
 
-    // Custom checkbox icon to make checkboxes more colorful
+    /**
+     * A custom icon for colorful checkboxes.
+     */
     private class ColorCheckboxIcon implements Icon {
         private final boolean selected;
         private final Color color;
@@ -539,20 +547,16 @@ public class DashboardPanel extends JPanel {
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2d = (Graphics2D) g.create();
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // Draw the border
             g2d.setColor(color);
             g2d.fillRoundRect(x, y, size, size, 4, 4);
 
             if (selected) {
                 g2d.setColor(Color.WHITE);
                 int padding = 4;
-                // Draw a checkmark
                 g2d.setStroke(new BasicStroke(2));
                 g2d.drawLine(x + padding, y + size/2, x + size/3, y + size - padding);
                 g2d.drawLine(x + size/3, y + size - padding, x + size - padding, y + padding);
             }
-
             g2d.dispose();
         }
 
@@ -567,7 +571,9 @@ public class DashboardPanel extends JPanel {
         }
     }
 
-    // The Badge class
+    /**
+     * inner class for badges
+     */
     public static class Badge {
         private String name;
         private String description;
@@ -604,6 +610,11 @@ public class DashboardPanel extends JPanel {
         }
     }
 
+    /**
+     * Creates the badges panel, which displays the user's
+     * earned badges, progress, and upcoming badges.
+     * @return A JPanel containing the badges interface.
+     */
     private JPanel createBadgesPanel() {
         badgesPanel = new JPanel();
         badgesPanel.setLayout(new BoxLayout(badgesPanel, BoxLayout.Y_AXIS));
@@ -614,7 +625,7 @@ public class DashboardPanel extends JPanel {
         ));
 
         JLabel badgesTitle = new JLabel("Badges");
-        badgesTitle.setFont(new Font("Arial", Font.BOLD, 22));
+        badgesTitle.setFont(UIConstants.SUBHEADER_FONT);
         badgesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         badgesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 
@@ -622,7 +633,7 @@ public class DashboardPanel extends JPanel {
 
         // Progress info
         JLabel progressTitle = new JLabel("Points Progress: " + currentUser.getPoints() + " points");
-        progressTitle.setFont(new Font("Arial", Font.BOLD, 14));
+        progressTitle.setFont(UIConstants.BODY_FONT);
         progressTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         progressTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
         badgesPanel.add(progressTitle);
@@ -638,22 +649,19 @@ public class DashboardPanel extends JPanel {
         badgesPanel.add(progressBar);
         badgesPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Add badge collection in a grid layout (4 columns for more badges)
+        // Add badge collection in a grid layout (4 columns for more badges
         JLabel allBadgesTitle = new JLabel("Badge Collection:");
-        allBadgesTitle.setFont(new Font("Arial", Font.BOLD, 16));
+        allBadgesTitle.setFont(UIConstants.SUBHEADER_FONT);
         allBadgesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         allBadgesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         badgesPanel.add(allBadgesTitle);
 
-        // Create a grid layout for all badges (4 columns)
         JPanel badgeGrid = new JPanel(new GridLayout(0, 4, 10, 10));
         badgeGrid.setBackground(Color.WHITE);
         badgeGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Show all point-based badges (earned or not)
         List<String> userBadges = currentUser.getBadges();
 
-        // First add all point-based badges
         for (Badge badge : badgeTypes.values()) {
             if (badge.getPointsRequired() > 0) {
                 boolean isEarned = userBadges.contains(badge.getName());
@@ -661,8 +669,6 @@ public class DashboardPanel extends JPanel {
                 badgeGrid.add(badgePanel);
             }
         }
-
-        // Then add environmental focus badges
         for (Badge badge : badgeTypes.values()) {
             if (badge.getPointsRequired() == 0) {
                 boolean isEarned = userBadges.contains(badge.getName());
@@ -681,9 +687,8 @@ public class DashboardPanel extends JPanel {
         badgesPanel.add(badgeScrollPane);
         badgesPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Upcoming badges title
         JLabel upcomingBadgesTitle = new JLabel("Next Badges:");
-        upcomingBadgesTitle.setFont(new Font("Arial", Font.BOLD, 16));
+        upcomingBadgesTitle.setFont(UIConstants.SUBHEADER_FONT);
         upcomingBadgesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         upcomingBadgesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         badgesPanel.add(upcomingBadgesTitle);
@@ -704,7 +709,6 @@ public class DashboardPanel extends JPanel {
                 upcomingBadgeRow.setBackground(Color.WHITE);
                 upcomingBadgeRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
-                // Create a more attractive badge icon on the left
                 JPanel iconContainer = new JPanel(new BorderLayout());
                 iconContainer.setBackground(Color.WHITE);
 
@@ -713,20 +717,19 @@ public class DashboardPanel extends JPanel {
                 badgeIcon.setLayout(new GridBagLayout());
 
                 JLabel iconLabel = new JLabel("?");
-                iconLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                iconLabel.setFont(UIConstants.SUBHEADER_FONT);
                 iconLabel.setForeground(Color.WHITE);
                 badgeIcon.add(iconLabel);
 
                 iconContainer.add(badgeIcon, BorderLayout.CENTER);
                 upcomingBadgeRow.add(iconContainer, BorderLayout.WEST);
 
-                // Badge info and progress in the center
                 JPanel infoPanel = new JPanel();
                 infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
                 infoPanel.setBackground(Color.WHITE);
 
                 JLabel badgeLabel = new JLabel(badge.getName() + " (" + badge.getPointsRequired() + " pts) " + badge.getIcon());
-                badgeLabel.setFont(new Font("Arial", Font.BOLD, 14));
+                badgeLabel.setFont(UIConstants.BODY_FONT);
                 badgeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 infoPanel.add(badgeLabel);
                 infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -745,47 +748,38 @@ public class DashboardPanel extends JPanel {
 
                 hasUpcomingBadges = true;
 
-                // Show the next 3 badges to earn
-                if (upcomingBadgesPanel.getComponentCount() >= 6) break; // 3 badges + 3 spacers
+                if (upcomingBadgesPanel.getComponentCount() >= 6) break; // 3 badges + 3 spacers (just show the next few here)
             }
         }
 
         if (!hasUpcomingBadges) {
             JLabel allBadgesLabel = new JLabel("You've earned all point-based badges! 🎉");
-            allBadgesLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+            allBadgesLabel.setFont(UIConstants.BODY_FONT);
             upcomingBadgesPanel.add(allBadgesLabel);
         }
-
         badgesPanel.add(upcomingBadgesPanel);
-
         return badgesPanel;
     }
 
-    // Add additional badge types for more environmental problems
+    /**
+     * Initializes the available badge types and their requirements.
+     */
     private void initializeBadges() {
-        // Define badges with improved colors and environmental categories
-        // Point-based achievement badges
         badgeTypes.put("novice", new Badge("Novice", "Starting your sustainability journey", 10, new Color(173, 216, 230), "🌱"));
         badgeTypes.put("beginner", new Badge("Beginner", "Making regular eco-friendly choices", 20, new Color(135, 206, 235), "🌿"));
         badgeTypes.put("intermediate", new Badge("Intermediate", "Taking significant steps to reduce impact", 40, new Color(0, 191, 255), "🌍"));
         badgeTypes.put("advanced", new Badge("Advanced", "Adopting a sustainable lifestyle", 80, new Color(30, 144, 255), "🌊"));
         badgeTypes.put("expert", new Badge("Expert", "Leading by example in sustainability", 160, new Color(0, 0, 205), "⭐"));
         badgeTypes.put("master", new Badge("Master", "Mastering sustainable living", 320, new Color(75, 0, 130), "🏆"));
-
-        // Environmental focus badges with brighter colors
         badgeTypes.put("community", new Badge("Community Champion", "Building environmental community connections", 0, new Color(135, 206, 250), "🤝"));
         badgeTypes.put("learning", new Badge("Eco Learner", "Expanding environmental knowledge", 0, new Color(173, 216, 230), "🧩"));
         badgeTypes.put("innovation", new Badge("Green Innovator", "Finding creative eco solutions", 0, new Color(152, 251, 152), "💡"));
-
         badgeTypes.put("water", new Badge("Water Protector", "Conserving and protecting water resources", 0, new Color(30, 144, 255), "💧"));
         badgeTypes.put("energy", new Badge("Energy Saver", "Reducing energy consumption", 0, new Color(255, 215, 0), "⚡"));
         badgeTypes.put("waste", new Badge("Zero Waste Hero", "Minimizing waste production", 0, new Color(255, 182, 193), "♻️"));
-
         badgeTypes.put("biodiversity", new Badge("Biodiversity Guardian", "Protecting plants and wildlife", 0, new Color(152, 251, 152), "🌺"));
         badgeTypes.put("advocacy", new Badge("Environmental Advocate", "Spreading awareness and advocacy", 0, new Color(255, 99, 71), "🏅"));
         badgeTypes.put("climate", new Badge("Climate Defender", "Taking action against climate change", 0, new Color(147, 112, 219), "🌀"));
-
-        // Additional environmental problem badges with vibrant colors
         badgeTypes.put("oceans", new Badge("Ocean Defender", "Taking action to protect marine ecosystems", 0, new Color(0, 105, 148), "🐠"));
         badgeTypes.put("plastic", new Badge("Plastic Fighter", "Reducing plastic pollution in the environment", 0, new Color(255, 64, 129), "🚫"));
         badgeTypes.put("forest", new Badge("Forest Guardian", "Protecting and preserving forest ecosystems", 0, new Color(76, 175, 80), "🌲"));

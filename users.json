@@ -1,8 +1,18 @@
-{"users": [{
-  "badges": [],
-  "password": "hello",
-  "completedTasks": [],
-  "name": "John Smith",
-  "email": "johnsmith@gmail.com",
-  "points": 0
-}]}
+{"users": [
+  {
+    "badges": [],
+    "password": "hello",
+    "completedTasks": [],
+    "name": "John Smith",
+    "email": "johnsmith@gmail.com",
+    "points": 0
+  },
+  {
+    "badges": [],
+    "password": "marla",
+    "completedTasks": [],
+    "name": "marla",
+    "email": "marla@gmail.com",
+    "points": 0
+  }
+]}
