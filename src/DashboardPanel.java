@@ -7,24 +7,19 @@ public class DashboardPanel extends JPanel {
     private ApplicationModel model;
     private TaskManager taskManager;
     private Profile currentUser;
-
     private JPanel contentPanel;
     private JPanel tasksPanel;
     private JPanel badgesPanel;
-
-    private JTabbedPane tasksTabbedPane;
+    private UserManager userManager;;
     private CardLayout contentCardLayout;
-
     private Color primaryColor = new Color(33, 150, 83);
-    private Color secondaryColor = new Color(240, 240, 240);
-    private Color accentColor = new Color(249, 170, 51);
-
     private Map<String, Badge> badgeTypes = new HashMap<>();
 
     public DashboardPanel(ApplicationModel model, Profile currentUser) {
         this.model = model;
         this.taskManager = model.getTaskManager();
         this.currentUser = currentUser;
+        userManager = new UserManager();
 
         initializeBadges();
         setLayout(new BorderLayout());
@@ -51,7 +46,6 @@ public class DashboardPanel extends JPanel {
 
         mainPanel.add(titlePanel, BorderLayout.NORTH);
 
-        // Main content with tasks and badges
         JPanel contentPanel = new JPanel(new GridBagLayout());
         contentPanel.setBackground(Color.WHITE);
 
@@ -59,7 +53,6 @@ public class DashboardPanel extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(10, 20, 10, 20);
 
-        // Tasks section (takes 60% of the width)
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.6;
@@ -68,7 +61,6 @@ public class DashboardPanel extends JPanel {
         tasksPanel = createTasksPanel();
         contentPanel.add(tasksPanel, gbc);
 
-        // Badges section (takes 40% of the width)
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 0.4;
@@ -79,7 +71,6 @@ public class DashboardPanel extends JPanel {
 
         mainPanel.add(contentPanel, BorderLayout.CENTER);
 
-        // Explore tasks section
         JPanel explorePanel = createExploreTasksPanel();
         mainPanel.add(explorePanel, BorderLayout.SOUTH);
 
@@ -93,12 +84,10 @@ public class DashboardPanel extends JPanel {
         JTabbedPane tasksTabbedPane = new JTabbedPane();
         tasksTabbedPane.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        // All Tasks Tab
         JPanel allTasksPanel = new JPanel();
         allTasksPanel.setLayout(new BoxLayout(allTasksPanel, BoxLayout.Y_AXIS));
         allTasksPanel.setBackground(Color.WHITE);
 
-        // Show only half of the tasks here, move others to explore
         List<Task> allTasks = taskManager.getTaskLibrary();
         int halfSize = allTasks.size() / 2;
 
@@ -221,6 +210,9 @@ public class DashboardPanel extends JPanel {
 
                 // Update points in header
                 refreshHeaderPoints();
+
+                // Save user data to JSON
+                userManager.saveData();
             }
         });
 
@@ -330,15 +322,6 @@ public class DashboardPanel extends JPanel {
         }
 
         return newBadges;
-    }
-
-    private Badge getBadgeByName(String badgeName) {
-        for (Badge badge : badgeTypes.values()) {
-            if (badge.getName().equals(badgeName)) {
-                return badge;
-            }
-        }
-        return null;
     }
 
     private JPanel createBadgeButton(Badge badge, boolean isEarned) {

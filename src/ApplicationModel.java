@@ -10,15 +10,7 @@ public class ApplicationModel {
         this.currentUser = user;
     }
 
-    public Profile getCurrentUser() {
-        return currentUser;
-    }
-
     public TaskManager getTaskManager() {
         return taskManager;
-    }
-
-    public boolean isUserLoggedIn() {
-        return currentUser != null;
     }
 }

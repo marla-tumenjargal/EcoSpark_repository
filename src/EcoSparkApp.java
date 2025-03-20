@@ -23,6 +23,7 @@ public class EcoSparkApp extends JFrame {
     private JPanel quizPanel;
     private JLabel questionLabel;
     private JButton[] optionButtons;
+    private UserManager userManager;
 
     CarbonFootprintCalculator calculator = new CarbonFootprintCalculator();
 
@@ -40,6 +41,7 @@ public class EcoSparkApp extends JFrame {
 
     public EcoSparkApp() {
         model = new ApplicationModel();
+        userManager = new UserManager();
 
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -67,10 +69,205 @@ public class EcoSparkApp extends JFrame {
         scrollPane = new JScrollPane(mainPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER); // Prevent horizontal scrolling
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         add(scrollPane);
         setVisible(true);
+    }
+
+    private void createLoginPanel() {
+        getContentPane().remove(scrollPane);
+
+        JPanel loginPanel = new JPanel();
+        loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
+        loginPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
+
+        JLabel titleLabel = new JLabel("Login to EcoSpark");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JPanel emailPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel emailLabel = new JLabel("Email:");
+        JTextField emailField = new JTextField(20);
+        emailPanel.add(emailLabel);
+        emailPanel.add(emailField);
+
+        JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel passwordLabel = new JLabel("Password:");
+        JPasswordField passwordField = new JPasswordField(20);
+        passwordPanel.add(passwordLabel);
+        passwordPanel.add(passwordField);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton loginButton = new RoundedButton("Log in", UIConstants.BUTTON_BLUE, Color.WHITE);
+        loginButton.setPreferredSize(new Dimension(180, 40));
+        JButton backButton = new RoundedButton("Back to Home", Color.WHITE, UIConstants.TEXT_COLOR);
+        backButton.setPreferredSize(new Dimension(180, 40));
+
+        buttonPanel.add(loginButton);
+        buttonPanel.add(backButton);
+
+        JLabel statusLabel = new JLabel(" ");
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        loginPanel.add(titleLabel);
+        loginPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        loginPanel.add(emailPanel);
+        loginPanel.add(passwordPanel);
+        loginPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        loginPanel.add(buttonPanel);
+        loginPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        loginPanel.add(statusLabel);
+
+        loginButton.addActionListener(e -> {
+            String email = emailField.getText();
+            String password = new String(passwordField.getPassword());
+
+            if (email.isEmpty() || password.isEmpty()) {
+                statusLabel.setText("Please enter email and password");
+                statusLabel.setForeground(Color.RED);
+                return;
+            }
+
+            if (userManager.authenticate(email, password)) {
+                currentUser = userManager.getProfile(email);
+                model.setCurrentUser(currentUser);
+                statusLabel.setText("Login successful!");
+                statusLabel.setForeground(UIConstants.GREEN_CHECK);
+
+                Timer timer = new Timer(1300, event -> {
+                    getContentPane().remove(loginPanel);
+                    getContentPane().add(scrollPane);
+                    revalidate();
+                    repaint();
+                });
+                timer.setRepeats(false);
+                timer.start();
+            } else {
+                statusLabel.setText("Invalid email or password");
+                statusLabel.setForeground(Color.RED);
+            }
+        });
+
+        backButton.addActionListener(e -> {
+            getContentPane().remove(loginPanel);
+            getContentPane().add(scrollPane);
+            revalidate();
+            repaint();
+        });
+
+        mainPanel.add(loginPanel, "login");
+        getContentPane().add(loginPanel);
+        revalidate();
+        repaint();
+    }
+
+    private void createRegisterPanel() {
+        getContentPane().remove(scrollPane);
+
+        JPanel registerPanel = new JPanel();
+        registerPanel.setLayout(new BoxLayout(registerPanel, BoxLayout.Y_AXIS));
+        registerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
+
+        JLabel titleLabel = new JLabel("Create Your EcoSpark Account");
+        titleLabel.setFont(UIConstants.SUBHEADER_FONT);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel nameLabel = new JLabel("Full Name:");
+        JTextField nameField = new JTextField(20);
+        namePanel.add(nameLabel);
+        namePanel.add(nameField);
+
+        JPanel emailPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel emailLabel = new JLabel("Email:");
+        JTextField emailField = new JTextField(20);
+        emailPanel.add(emailLabel);
+        emailPanel.add(emailField);
+
+        JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel passwordLabel = new JLabel("Password:");
+        JPasswordField passwordField = new JPasswordField(20);
+        passwordPanel.add(passwordLabel);
+        passwordPanel.add(passwordField);
+
+        JPanel confirmPasswordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel confirmPasswordLabel = new JLabel("Confirm Password:");
+        JPasswordField confirmPasswordField = new JPasswordField(20);
+        confirmPasswordPanel.add(confirmPasswordLabel);
+        confirmPasswordPanel.add(confirmPasswordField);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(new Color(240, 248, 255));
+
+        JButton registerButton = new RoundedButton("Register", UIConstants.BUTTON_BLUE, Color.WHITE);
+        JButton backButton = new RoundedButton("Back to Home", Color.WHITE, UIConstants.TEXT_COLOR);
+        buttonPanel.add(registerButton);
+        buttonPanel.add(backButton);
+
+        JLabel statusLabel = new JLabel(" ");
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        registerPanel.add(titleLabel);
+        registerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        registerPanel.add(namePanel);
+        registerPanel.add(emailPanel);
+        registerPanel.add(passwordPanel);
+        registerPanel.add(confirmPasswordPanel);
+        registerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        registerPanel.add(buttonPanel);
+        registerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        registerPanel.add(statusLabel);
+
+        registerButton.addActionListener(e -> {
+            String name = nameField.getText();
+            String email = emailField.getText();
+            String password = new String(passwordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
+
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                statusLabel.setText("All fields must be filled out!");
+                statusLabel.setForeground(Color.RED);
+            } else if (!password.equals(confirmPassword)) {
+                statusLabel.setText("Passwords do not match!");
+                statusLabel.setForeground(Color.RED);
+            } else if (userManager.userExists(email)) {
+                statusLabel.setText("Email already registered!");
+                statusLabel.setForeground(Color.RED);
+            } else {
+                Profile newProfile = new Profile(name, email, password);
+                userManager.addUser(newProfile);
+
+                statusLabel.setText("Account created successfully!");
+                statusLabel.setFont(UIConstants.BUTTON_FONT);
+                statusLabel.setForeground(UIConstants.GREEN_CHECK);
+
+                Timer timer = new Timer(1300, event -> {
+                    getContentPane().remove(registerPanel);
+                    getContentPane().add(scrollPane);
+                    revalidate();
+                    repaint();
+                });
+                timer.setRepeats(false);
+                timer.start();
+            }
+        });
+
+        backButton.addActionListener(e -> {
+            getContentPane().remove(registerPanel);
+            getContentPane().add(scrollPane);
+            revalidate();
+            repaint();
+        });
+
+        getContentPane().add(registerPanel);
+        setVisible(true);
+    }
+
+    @Override
+    public void dispose() {
+        userManager.saveData();
+        super.dispose();
     }
 
     public JPanel createQuizPanel() {
@@ -721,185 +918,6 @@ public class EcoSparkApp extends JFrame {
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
     }
 
-    private void createLoginPanel() {
-        getContentPane().remove(scrollPane);
-
-        JPanel loginPanel = new JPanel();
-        loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
-        loginPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
-
-        JLabel titleLabel = new JLabel("Login to EcoSpark");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JPanel emailPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel emailLabel = new JLabel("Email:");
-        JTextField emailField = new JTextField(20);
-        emailPanel.add(emailLabel);
-        emailPanel.add(emailField);
-
-        JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel passwordLabel = new JLabel("Password:");
-        JPasswordField passwordField = new JPasswordField(20);
-        passwordPanel.add(passwordLabel);
-        passwordPanel.add(passwordField);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.setBackground(new Color(240, 248, 255));
-        JButton loginButton = new JButton("Log In");
-        JButton backButton = new JButton("Back to Home");
-        buttonPanel.add(loginButton);
-        buttonPanel.add(backButton);
-
-        JLabel statusLabel = new JLabel(" ");
-        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        loginPanel.add(titleLabel);
-        loginPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        loginPanel.add(emailPanel);
-        loginPanel.add(passwordPanel);
-        loginPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        loginPanel.add(buttonPanel);
-        loginPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        loginPanel.add(statusLabel);
-
-        loginButton.addActionListener(e -> {
-            String email = emailField.getText();
-            String password = new String(passwordField.getPassword());
-
-            if (email.isEmpty() || password.isEmpty()) {
-                statusLabel.setText("Please enter email and password");
-                statusLabel.setForeground(Color.RED);
-                return;
-            }
-
-            if (userCredentials.containsKey(email) && userCredentials.get(email).equals(password)) {
-                model.setCurrentUser(currentUser);
-                currentUser = userProfiles.get(email);
-                statusLabel.setText("Login successful!");
-                statusLabel.setForeground(UIConstants.GREEN_CHECK);
-                getContentPane().remove(loginPanel);
-                getContentPane().add(scrollPane);
-                revalidate();
-                repaint();
-            } else {
-                statusLabel.setText("Invalid email or password");
-                statusLabel.setForeground(Color.RED);
-            }
-        });
-
-        backButton.addActionListener(e -> {
-            getContentPane().remove(loginPanel);
-            getContentPane().add(scrollPane);
-            revalidate();
-            repaint();
-        });
-
-        mainPanel.add(loginPanel, "login");
-        getContentPane().add(loginPanel);
-        revalidate();
-        repaint();
-    }
-
-    private void createRegisterPanel() {
-        getContentPane().remove(scrollPane);
-
-        JPanel registerPanel = new JPanel();
-        registerPanel.setLayout(new BoxLayout(registerPanel, BoxLayout.Y_AXIS));
-        registerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
-
-        JLabel titleLabel = new JLabel("Create Your EcoSpark Account");
-        titleLabel.setFont(UIConstants.SUBHEADER_FONT);
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel nameLabel = new JLabel("Full Name:");
-        JTextField nameField = new JTextField(20);
-        namePanel.add(nameLabel);
-        namePanel.add(nameField);
-
-        JPanel emailPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel emailLabel = new JLabel("Email:");
-        JTextField emailField = new JTextField(20);
-        emailPanel.add(emailLabel);
-        emailPanel.add(emailField);
-
-        JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel passwordLabel = new JLabel("Password:");
-        JPasswordField passwordField = new JPasswordField(20);
-        passwordPanel.add(passwordLabel);
-        passwordPanel.add(passwordField);
-
-        JPanel confirmPasswordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel confirmPasswordLabel = new JLabel("Confirm Password:");
-        JPasswordField confirmPasswordField = new JPasswordField(20);
-        confirmPasswordPanel.add(confirmPasswordLabel);
-        confirmPasswordPanel.add(confirmPasswordField);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.setBackground(new Color(240, 248, 255));
-        JButton registerButton = new JButton("Register");
-        JButton backButton = new JButton("Back to Home");
-        buttonPanel.add(registerButton);
-        buttonPanel.add(backButton);
-
-        JLabel statusLabel = new JLabel(" ");
-        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        registerPanel.add(titleLabel);
-        registerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        registerPanel.add(namePanel);
-        registerPanel.add(emailPanel);
-        registerPanel.add(passwordPanel);
-        registerPanel.add(confirmPasswordPanel);
-        registerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        registerPanel.add(buttonPanel);
-        registerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        registerPanel.add(statusLabel);
-
-        registerButton.addActionListener(e -> {
-            String name = nameField.getText();
-            String email = emailField.getText();
-            String password = new String(passwordField.getPassword());
-            String confirmPassword = new String(confirmPasswordField.getPassword());
-
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                statusLabel.setText("All fields must be filled out!");
-                statusLabel.setForeground(Color.RED);
-            } else if (!password.equals(confirmPassword)) {
-                statusLabel.setText("Passwords do not match!");
-                statusLabel.setForeground(Color.RED);
-            } else {
-                userCredentials.put(email, password);
-                userNames.put(email, name);
-                userProfiles.put(email, new Profile(name, password, email));
-
-                statusLabel.setText("Account created successfully!");
-                statusLabel.setFont(UIConstants.BUTTON_FONT);
-                statusLabel.setForeground(UIConstants.GREEN_CHECK);
-
-                Timer timer = new Timer(1300, event -> {
-                    getContentPane().remove(registerPanel);
-                    getContentPane().add(scrollPane);
-                    revalidate();
-                    repaint();
-                });
-                timer.setRepeats(false);
-                timer.start();
-            }
-        });
-
-        backButton.addActionListener(e -> {
-            getContentPane().remove(registerPanel);
-            getContentPane().add(scrollPane);
-            revalidate();
-            repaint();
-        });
-
-        getContentPane().add(registerPanel);
-        setVisible(true);
-    }
-
     private void createHeroSection() {
         JPanel heroPanel = new JPanel();
         heroPanel.setLayout(new BoxLayout(heroPanel, BoxLayout.X_AXIS));
@@ -1060,7 +1078,7 @@ public class EcoSparkApp extends JFrame {
 
         JButton profileButton = new JButton();
         try {
-            ImageIcon profileIcon = new ImageIcon(new ImageIcon(getClass().getResource("/com/hillcrest/visuals/profile.png"))
+            ImageIcon profileIcon = new ImageIcon(new ImageIcon(getClass().getResource("/com/hillcrest/visuals/profile_icon.png"))
                     .getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
             profileButton.setIcon(profileIcon);
         } catch (Exception e) {
@@ -1111,74 +1129,6 @@ public class EcoSparkApp extends JFrame {
         return iconPanel;
     }
 
-//    private void createQuizPanel() {
-//        JPanel quizPanel = new JPanel(new BorderLayout());
-//        quizPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-//
-//        JPanel headerPanel = new JPanel(new BorderLayout());
-//        JLabel titleLabel = new JLabel("Climate Change Knowledge Quiz");
-//        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-//        headerPanel.add(titleLabel, BorderLayout.WEST);
-//
-//        JButton backButton = new JButton("Back to Dashboard");
-//        backButton.addActionListener(e -> cardLayout.show(mainPanel, "dashboard"));
-//        headerPanel.add(backButton, BorderLayout.EAST);
-//
-//        JPanel quizContentPanel = new JPanel();
-//        quizContentPanel.setLayout(new BoxLayout(quizContentPanel, BoxLayout.Y_AXIS));
-//
-//        JLabel quizInstructionsLabel = new JLabel("Test your knowledge about climate change and its impacts");
-//        quizInstructionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-//        quizInstructionsLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-//
-//        JPanel questionPanel = new JPanel();
-//        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
-//        questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-//
-//        JLabel questionLabel = new JLabel("1. What is the main greenhouse gas contributing to climate change?");
-//        questionLabel.setFont(new Font("Arial", Font.BOLD, 14));
-//
-//        JRadioButton option1 = new JRadioButton("Carbon Dioxide (CO₂)");
-//        JRadioButton option2 = new JRadioButton("Oxygen (O₂)");
-//        JRadioButton option3 = new JRadioButton("Nitrogen (N₂)");
-//        JRadioButton option4 = new JRadioButton("Hydrogen (H₂)");
-//
-//        ButtonGroup buttonGroup = new ButtonGroup();
-//        buttonGroup.add(option1);
-//        buttonGroup.add(option2);
-//        buttonGroup.add(option3);
-//        buttonGroup.add(option4);
-//
-//        JButton submitButton = new JButton("Submit Answer");
-//        submitButton.addActionListener(e -> {
-//            if (option1.isSelected()) {
-//                JOptionPane.showMessageDialog(frame, "Correct! Carbon dioxide is the primary greenhouse gas contributing to climate change.");
-//            } else {
-//                JOptionPane.showMessageDialog(frame, "Incorrect. The correct answer is Carbon Dioxide (CO₂).");
-//            }
-//        });
-//
-//        questionPanel.add(questionLabel);
-//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-//        questionPanel.add(option1);
-//        questionPanel.add(option2);
-//        questionPanel.add(option3);
-//        questionPanel.add(option4);
-//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-//        questionPanel.add(submitButton);
-//
-//        quizContentPanel.add(quizInstructionsLabel);
-//        quizContentPanel.add(questionPanel);
-//
-//        JScrollPane scrollPane = new JScrollPane(quizContentPanel);
-//        scrollPane.setBorder(BorderFactory.createTitledBorder("Questions"));
-//
-//        quizPanel.add(headerPanel, BorderLayout.NORTH);
-//        quizPanel.add(scrollPane, BorderLayout.CENTER);
-//
-//        mainPanel.add(quizPanel, "quiz");
-//    }
-
     private void createProfileEditPanel() {
         getContentPane().remove(scrollPane);
 
@@ -1187,10 +1137,12 @@ public class EcoSparkApp extends JFrame {
         profileEditPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         profileEditPanel.setBackground(Color.WHITE);
 
+        // Title
         JLabel titleLabel = new JLabel("Edit Your Profile");
         titleLabel.setFont(UIConstants.SUBHEADER_FONT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // User Info Panel
         JPanel infoPanel = new JPanel(new GridLayout(3, 2, 10, 15));
         infoPanel.setBackground(Color.WHITE);
         infoPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
@@ -1204,7 +1156,7 @@ public class EcoSparkApp extends JFrame {
         JLabel emailLabel = new JLabel("Email:");
         emailLabel.setFont(UIConstants.BUTTON_FONT);
         JTextField emailField = new JTextField(currentUser.getEmail());
-        emailField.setEditable(false);
+        emailField.setEditable(false); // Email should not be editable
 
         JLabel passwordLabel = new JLabel("New Password:");
         JPasswordField passwordField = new JPasswordField();
@@ -1216,6 +1168,7 @@ public class EcoSparkApp extends JFrame {
         infoPanel.add(passwordLabel);
         infoPanel.add(passwordField);
 
+        // Points Panel
         JPanel pointsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         pointsPanel.setBackground(Color.WHITE);
         pointsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -1225,6 +1178,7 @@ public class EcoSparkApp extends JFrame {
         pointsLabel.setForeground(UIConstants.GREEN_CHECK);
         pointsPanel.add(pointsLabel);
 
+        // Completed Tasks Panel
         JPanel tasksPanel = new JPanel();
         tasksPanel.setLayout(new BoxLayout(tasksPanel, BoxLayout.Y_AXIS));
         tasksPanel.setBackground(Color.WHITE);
@@ -1264,6 +1218,7 @@ public class EcoSparkApp extends JFrame {
 
         tasksPanel.add(taskScrollPane);
 
+        // Badges Panel
         JPanel badgesPanel = new JPanel();
         badgesPanel.setLayout(new BoxLayout(badgesPanel, BoxLayout.Y_AXIS));
         badgesPanel.setBackground(Color.WHITE);
@@ -1300,12 +1255,17 @@ public class EcoSparkApp extends JFrame {
         badgeScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         badgesPanel.add(badgeScrollPane);
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
-        JButton saveButton = new JButton("Save Changes");
-        JButton cancelButton = new JButton("Cancel");
+
+        JButton saveButton = new RoundedButton("Save Changes", UIConstants.BUTTON_BLUE, Color.WHITE);
+        JButton cancelButton = new RoundedButton("Cancel", Color.WHITE, UIConstants.TEXT_COLOR);
+        JButton deleteButton = new RoundedButton("Delete Profile", Color.RED, Color.WHITE); // Delete button
         buttonPanel.add(saveButton);
         buttonPanel.add(cancelButton);
+        buttonPanel.add(deleteButton);
+
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -1332,13 +1292,13 @@ public class EcoSparkApp extends JFrame {
                 statusLabel.setForeground(Color.RED);
                 return;
             }
-            currentUser.setName(newName);
-            userNames.put(currentUser.getEmail(), newName);
 
+            currentUser.setName(newName);
             if (!newPassword.isEmpty()) {
                 currentUser.setPassword(newPassword);
-                userCredentials.put(currentUser.getEmail(), newPassword);
             }
+
+            userManager.updateProfile(currentUser);
 
             statusLabel.setText("Profile updated successfully!");
             statusLabel.setForeground(Color.GREEN);
@@ -1363,6 +1323,33 @@ public class EcoSparkApp extends JFrame {
             getContentPane().add(scrollPane);
             revalidate();
             repaint();
+        });
+
+        deleteButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to delete your profile? This action cannot be undone.",
+                    "Delete Profile",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                userManager.deleteProfile(currentUser.getEmail());
+                currentUser = null;
+                model.setCurrentUser(null);
+
+                getContentPane().remove(profileEditPanel);
+                createLoginPanel();
+                revalidate();
+                repaint();
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Profile deleted successfully!",
+                        "Profile Deleted",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            }
         });
 
         getContentPane().add(profileEditPanel);
@@ -1622,18 +1609,12 @@ public class EcoSparkApp extends JFrame {
                 "/com/hillcrest/visuals/carbon_footprint_button_graphic.png",
                 "Calculate carbon footprint",
                 e -> {
-                    if (isUserLoggedIn()) {
-                        JFrame dashboardFrame = new JFrame("🌲" + currentUser.getName() + "'s Dashboard 🌲");
-                        dashboardFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                        dashboardFrame.setSize(1000, 1000);
 
-                        DashboardPanel dashboardPanel = new DashboardPanel(model, currentUser);
-                        dashboardFrame.add(dashboardPanel);
-                        dashboardFrame.setLocationRelativeTo(null);
-                        dashboardFrame.setVisible(true);
+                    if (isUserLoggedIn()) {
+                        createCarbonFootprintPanel();
                     } else {
-                        JOptionPane.showMessageDialog(null,
-                                "Please log in to calculate your carbon footprint.",
+                        JOptionPane.showMessageDialog(this,
+                                "Please log in to access your dashboard.",
                                 "Login Required",
                                 JOptionPane.INFORMATION_MESSAGE);
                     }
@@ -1658,11 +1639,19 @@ public class EcoSparkApp extends JFrame {
                 "/com/hillcrest/visuals/take_action.png",
                 "Take personalized actions",
                 e -> {
+
                     if (isUserLoggedIn()) {
-                        createCarbonFootprintPanel();
+                        JFrame dashboardFrame = new JFrame("🌲" + currentUser.getName() + "'s Dashboard 🌲");
+                        dashboardFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        dashboardFrame.setSize(1000, 1000);
+
+                        DashboardPanel dashboardPanel = new DashboardPanel(model, currentUser);
+                        dashboardFrame.add(dashboardPanel);
+                        dashboardFrame.setLocationRelativeTo(null);
+                        dashboardFrame.setVisible(true);
                     } else {
-                        JOptionPane.showMessageDialog(this,
-                                "Please log in to view your profile",
+                        JOptionPane.showMessageDialog(null,
+                                "Please log in to calculate your carbon footprint.",
                                 "Login Required",
                                 JOptionPane.INFORMATION_MESSAGE);
                     }

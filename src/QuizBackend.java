@@ -1,13 +1,11 @@
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
-
 
 public class QuizBackend {
-    private List<Map<String, Object>> allQuestions; // Stores all questions as maps
-    private Queue<Map<String, Object>> quizQuestions; // Queue for managing quiz questions
+    private List<Map<String, Object>> allQuestions;
+    private Queue<Map<String, Object>> quizQuestions;
     private int score;
-    private Map<String, int[]> categoryPerformance; // Tracks performance by category
+    private Map<String, int[]> categoryPerformance;
     private static final int QUESTIONS_PER_QUIZ = 20;
 
     public QuizBackend() {
@@ -15,12 +13,10 @@ public class QuizBackend {
         quizQuestions = new LinkedList<>();
         categoryPerformance = new HashMap<>();
         score = 0;
-
-        loadAllQuestions(); // Load questions from a predefined dataset
-        selectRandomQuestions(); // Randomly select questions for the quiz
+        loadAllQuestions();
+        selectRandomQuestions();
     }
 
-    // Loads all questions into the `allQuestions` list
     private void loadAllQuestions() {
         allQuestions.add(createQuestion(
                 "What is the primary cause of global warming?",
@@ -589,32 +585,26 @@ public class QuizBackend {
         categoryPerformance.put(category, performance);
     }
 
-    // Checks if there are more questions in the quiz
     public boolean hasMoreQuestions() {
         return !quizQuestions.isEmpty();
     }
 
-    // Returns the user's score
     public int getScore() {
         return score;
     }
 
-    // Returns the total number of questions in the quiz
     public int getTotalQuestions() {
         return QUESTIONS_PER_QUIZ;
     }
 
-    // Returns the current question number
     public int getCurrentQuestionNumber() {
         return QUESTIONS_PER_QUIZ - quizQuestions.size();
     }
 
-    // Returns the current category of the question
     public String getCurrentCategory() {
         return quizQuestions.isEmpty() ? "" : (String) quizQuestions.peek().get("category");
     }
 
-    // Returns performance metrics by category
     public Map<String, Double> getCategoryPerformance() {
         Map<String, Double> performance = new HashMap<>();
         for (Map.Entry<String, int[]> entry : categoryPerformance.entrySet()) {
@@ -628,151 +618,3 @@ public class QuizBackend {
         return performance;
     }
 }
-
-//public class QuizBackend {
-//    private List<String[]> allQuestions;
-//
-//    private int currentQuestionIndex;
-//    private List<String[]> selectedQuestions;
-//    private int score;
-//    private static final int QUESTIONS_PER_QUIZ = 20;
-//
-//    public QuizBackend() {
-//        allQuestions = new ArrayList<>();
-//        selectedQuestions = new ArrayList<>();
-//
-//        loadAllQuestions();
-//
-//        selectRandomQuestions();
-//        currentQuestionIndex = 0;
-//        score = 0;
-//    }
-//
-//    private void loadAllQuestions() {
-//
-//        allQuestions.add(new String[]{"What is the primary cause of global warming?", "Greenhouse gases", "Solar flares", "Volcanic activity", "Deforestation"});
-//        allQuestions.add(new String[]{"Which of the following is a renewable energy source?", "Solar power", "Coal", "Natural gas", "Nuclear power"});
-//        allQuestions.add(new String[]{"Which gas is the most abundant greenhouse gas in Earth's atmosphere?", "Water vapor", "Carbon dioxide", "Methane", "Nitrous oxide"});
-//        allQuestions.add(new String[]{"What is the Kyoto Protocol?", "An international treaty to reduce greenhouse gas emissions", "A method to measure carbon footprint", "A type of carbon capture technology", "A climate model system"});
-//        allQuestions.add(new String[]{"Which of the following contributes most to ocean acidification?", "Carbon dioxide absorption", "Plastic pollution", "Oil spills", "Agricultural runoff"});
-//        allQuestions.add(new String[]{"What is the Paris Agreement primarily focused on?", "Limiting global warming to well below 2°C", "Eliminating single-use plastics", "Protecting endangered marine species", "Promoting nuclear energy"});
-//        allQuestions.add(new String[]{"Which of the following is NOT a fossil fuel?", "Biomass", "Coal", "Natural gas", "Petroleum"});
-//        allQuestions.add(new String[]{"What is the greenhouse effect?", "The trapping of heat in Earth's atmosphere", "The cooling of Earth due to reflective clouds", "The destruction of the ozone layer", "The warming of oceans due to underwater volcanoes"});
-//        allQuestions.add(new String[]{"Which sector is typically the largest emitter of greenhouse gases globally?", "Energy production", "Agriculture", "Transportation", "Manufacturing"});
-//        allQuestions.add(new String[]{"What does IPCC stand for?", "Intergovernmental Panel on Climate Change", "International Protocol on Carbon Capture", "Institute for Planetary Climate Control", "Integrated Plan for Climate Correction"});
-//        allQuestions.add(new String[]{"Which of the following is a direct effect of global warming?", "Rising sea levels", "Increased volcanic activity", "More frequent solar eclipses", "Stronger gravitational pull"});
-//        allQuestions.add(new String[]{"What is carbon sequestration?", "The process of capturing and storing atmospheric carbon dioxide", "The burning of fossil fuels", "The measurement of carbon footprints", "The recycling of carbon-based products"});
-//        allQuestions.add(new String[]{"Which of these animals is considered particularly vulnerable to climate change?", "Polar bears", "Cockroaches", "Pigeons", "Domestic cats"});
-//        allQuestions.add(new String[]{"What does 'carbon neutral' mean?", "Having a net zero carbon footprint", "Not containing any carbon", "Using only carbon-free energy", "Removing all carbon dioxide from the atmosphere"});
-//        allQuestions.add(new String[]{"Which of the following is considered a tipping point in climate systems?", "Melting of the Greenland ice sheet", "Annual flooding of the Nile River", "Seasonal migration of birds", "Formation of hurricanes"});
-//        allQuestions.add(new String[]{"What is an electric vehicle's primary environmental advantage?", "Zero tailpipe emissions", "No manufacturing carbon footprint", "Quieter operation", "Less water consumption"});
-//        allQuestions.add(new String[]{"Which of the following best defines 'climate'?", "Long-term weather patterns in a specific area", "Daily weather conditions", "Current temperature and precipitation", "Seasonal changes in a region"});
-//        allQuestions.add(new String[]{"What is a carbon tax?", "A fee imposed on the burning of carbon-based fuels", "A fine for exceeding carbon emissions limits", "A tax credit for carbon-neutral companies", "A tariff on imported goods with high carbon footprints"});
-//        allQuestions.add(new String[]{"Which of the following is a consequence of melting permafrost?", "Release of stored methane", "Increased biodiversity", "More stable coastlines", "Cooler ocean temperatures"});
-//        allQuestions.add(new String[]{"What is the primary function of the ozone layer?", "To absorb UV radiation", "To trap heat in the atmosphere", "To produce oxygen", "To prevent acid rain"});
-//        allQuestions.add(new String[]{"Which country was the world's largest carbon dioxide emitter as of 2024?", "China", "United States", "India", "Russia"});
-//        allQuestions.add(new String[]{"What is greenwashing?", "Falsely representing products or policies as environmentally friendly", "Planting trees to offset carbon emissions", "Cleaning up polluted waterways", "Using green energy sources"});
-//        allQuestions.add(new String[]{"Which of the following is an example of climate adaptation?", "Building sea walls to prevent flooding", "Reducing greenhouse gas emissions", "Switching to renewable energy", "Decreasing meat consumption"});
-//        allQuestions.add(new String[]{"What is a carbon sink?", "A natural environment that absorbs more carbon than it releases", "A man-made container for storing carbon", "A measurement of a product's carbon footprint", "A device that removes carbon from the atmosphere"});
-//        allQuestions.add(new String[]{"Which of the following best describes the albedo effect?", "The reflection of solar radiation by Earth's surfaces", "The absorption of heat by greenhouse gases", "The circulation of ocean currents", "The distribution of rainfall patterns"});
-//        allQuestions.add(new String[]{"What is desertification?", "The process of fertile land becoming desert", "The creation of artificial desert ecosystems", "The conversion of deserts to farmland", "The study of desert climates"});
-//        allQuestions.add(new String[]{"Which global event significantly reduced carbon emissions in 2020?", "COVID-19 pandemic", "Paris Agreement implementation", "Renewable energy revolution", "International carbon tax"});
-//        allQuestions.add(new String[]{"What is the primary source of methane emissions from agriculture?", "Livestock digestion", "Fertilizer application", "Farm equipment", "Crop burning"});
-//        allQuestions.add(new String[]{"Which renewable energy source depends on the water cycle?", "Hydroelectric power", "Geothermal energy", "Wind power", "Solar power"});
-//        allQuestions.add(new String[]{"What is the primary purpose of a cap and trade system?", "To limit and reduce greenhouse gas emissions", "To regulate international oil prices", "To control population growth in urban areas", "To distribute agricultural subsidies"});
-//        allQuestions.add(new String[]{"Which of the following is NOT a potential effect of climate change on human health?", "Decreased incidence of respiratory diseases", "Increased heat-related illnesses", "Expanded range of vector-borne diseases", "More frequent injuries from extreme weather events"});
-//        allQuestions.add(new String[]{"What does the term 'net-zero emissions' mean?", "Balancing the amount of greenhouse gases produced and removed from the atmosphere", "Producing zero emissions whatsoever", "Offsetting all historical emissions", "Having a negative carbon footprint"});
-//        allQuestions.add(new String[]{"Which technological approach attempts to artificially cool the Earth?", "Solar radiation management", "Carbon capture and storage", "Renewable energy deployment", "Forest conservation"});
-//        allQuestions.add(new String[]{"What is eutrophication?", "Excessive nutrient enrichment of water bodies", "The process of soil formation", "The extinction of plant species", "The warming of ocean currents"});
-//        allQuestions.add(new String[]{"Which phenomenon can cause widespread coral bleaching?", "Ocean warming", "Increased phytoplankton", "Reduced salinity", "Higher dissolved oxygen"});
-//        allQuestions.add(new String[]{"What is the primary function of a wind turbine?", "To convert wind energy into electricity", "To reduce local air temperatures", "To disperse air pollution", "To prevent soil erosion"});
-//        allQuestions.add(new String[]{"Which international treaty aimed to phase out substances that deplete the ozone layer?", "Montreal Protocol", "Kyoto Protocol", "Paris Agreement", "Rio Declaration"});
-//        allQuestions.add(new String[]{"What is an urban heat island?", "A metropolitan area significantly warmer than surrounding rural areas", "A designated cooling center during heat waves", "A tropical island near urban areas", "A heat-resistant infrastructure design"});
-//        allQuestions.add(new String[]{"Which of the following describes climate mitigation?", "Actions to reduce greenhouse gas emissions", "Preparations for climate change impacts", "The study of past climate conditions", "The natural cycling of carbon"});
-//        allQuestions.add(new String[]{"What percentage of Earth's surface is covered by oceans?", "About 70%", "About 50%", "About 30%", "About 90%"});
-//        allQuestions.add(new String[]{"Which of the following is a common measurement unit for a carbon footprint?", "Metric tons of CO₂ equivalent", "Kilowatts per hour", "Parts per million", "British thermal units"});
-//        allQuestions.add(new String[]{"What is the El Niño-Southern Oscillation (ENSO)?", "A climate pattern involving changes in ocean temperature", "A type of hurricane formation", "A measurement of arctic ice thickness", "A greenhouse gas monitoring system"});
-//        allQuestions.add(new String[]{"Which sector is responsible for the most food waste globally?", "Households", "Restaurants", "Farms", "Grocery stores"});
-//        allQuestions.add(new String[]{"What is the primary purpose of the Green Climate Fund?", "To help developing countries respond to climate change", "To invest in green technology startups", "To purchase and protect rainforests", "To fund climate research"});
-//        allQuestions.add(new String[]{"Which of the following accurately describes a circular economy?", "An economic system aimed at eliminating waste and continual use of resources", "An economy based entirely on renewable energy", "A financial system with centralized control", "An economic model focused on maximizing consumption"});
-//        allQuestions.add(new String[]{"What does COP stand for in the context of climate change?", "Conference of the Parties", "Carbon Offset Program", "Climate Oversight Panel", "Committee On Pollution"});
-//        allQuestions.add(new String[]{"Which gas has the highest global warming potential?", "Sulfur hexafluoride", "Carbon dioxide", "Methane", "Nitrous oxide"});
-//        allQuestions.add(new String[]{"What is the primary cause of ocean dead zones?", "Nutrient pollution leading to oxygen depletion", "Oil spills", "Plastic pollution", "Ocean warming"});
-//        allQuestions.add(new String[]{"Which of the following is an example of a negative feedback loop in climate systems?", "Increased cloud formation reflecting more sunlight", "Melting ice reducing surface reflectivity", "Warming leading to more water vapor in the atmosphere", "Forest fires releasing more carbon dioxide"});
-//        allQuestions.add(new String[]{"What is meant by the term 'climate justice'?", "Addressing climate change while considering ethical and political issues", "Legal prosecution of major carbon emitters", "Equal distribution of carbon emission allowances", "Compensation for historical emissions"});
-//        allQuestions.add(new String[]{"Which tree-planting strategy is most effective for carbon sequestration?", "Planting diverse native species", "Creating monoculture plantations", "Focusing only on fast-growing species", "Planting only in urban areas"});
-//        allQuestions.add(new String[]{"What is a vertical farm?", "An agricultural technique using stacked layers in controlled environments", "A farm on a mountainside", "A skyscraper with gardens on multiple floors", "A deep underground growing facility"});
-//        allQuestions.add(new String[]{"Which of the following is the biggest threat to coral reefs?", "Ocean acidification and warming", "Overfishing", "Plastic pollution", "Oil spills"});
-//        allQuestions.add(new String[]{"What is energy efficiency?", "Using less energy to perform the same task", "Producing energy at lower cost", "Converting between different forms of energy", "Storing energy for later use"});
-//        allQuestions.add(new String[]{"What is the primary goal of the 'Trillion Trees' initiative?", "To combat climate change through reforestation", "To create sustainable timber sources", "To prevent soil erosion", "To increase biodiversity"});
-//        allQuestions.add(new String[]{"Which of the following is NOT generally considered a clean energy source?", "Natural gas", "Solar", "Wind", "Hydroelectric"});
-//        allQuestions.add(new String[]{"What is a food mile?", "The distance food travels from production to consumer", "A measurement of a food's carbon footprint", "The shelf life of produce", "A unit of agricultural efficiency"});
-//        allQuestions.add(new String[]{"Which of the following is a primary driver of deforestation in tropical regions?", "Agricultural expansion", "Urban development", "Mining operations", "Tourism"});
-//        allQuestions.add(new String[]{"What does the term 'blue carbon' refer to?", "Carbon captured by coastal and marine ecosystems", "Carbon stored in deep ocean trenches", "The color-coding system for carbon offsets", "Carbon dioxide dissolved in ocean water"});
-//        allQuestions.add(new String[]{"Which of the following is NOT typically considered a form of geoengineering?", "Energy efficiency improvements", "Ocean iron fertilization", "Stratospheric aerosol injection", "Space-based sun shields"});
-//        allQuestions.add(new String[]{"What is a heat pump?", "A device that transfers heat from a cool space to a warm space", "A solar-powered water heater", "A type of geothermal power plant", "A device that generates heat through compression"});
-//        allQuestions.add(new String[]{"Which of the following is a consequence of ocean acidification?", "Difficulty for shellfish to form shells", "Increased fish reproduction", "More vibrant coral reefs", "Higher ocean salinity"});
-//        allQuestions.add(new String[]{"What is the primary function of a smart grid?", "To integrate renewable energy and optimize energy efficiency", "To provide free electricity to low-income areas", "To detect power outages automatically", "To generate electricity from multiple sources"});
-//        allQuestions.add(new String[]{"Which of the following best describes carbon offsetting?", "Compensating for emissions by funding projects that reduce emissions elsewhere", "Directly removing carbon from the atmosphere", "Planting trees on industrial properties", "Reducing personal carbon emissions"});
-//        allQuestions.add(new String[]{"What is environmental racism?", "Policies that disproportionately affect minority communities with environmental hazards", "Opposition to environmental protection based on racial prejudice", "Discrimination in hiring for environmental jobs", "Exclusion of minorities from natural recreation areas"});
-//        allQuestions.add(new String[]{"Which of the following is a common criticism of biofuels?", "They can compete with food production", "They produce more greenhouse gases than fossil fuels", "They require more water than conventional agriculture", "They cannot be stored for long periods"});
-//        allQuestions.add(new String[]{"What is meant by the phrase 'just transition'?", "A fair transition to a low-carbon economy that supports workers and communities", "The legal process of prosecuting polluters", "The equitable distribution of climate adaptation funding", "A gradual implementation of environmental regulations"});
-//        allQuestions.add(new String[]{"Which renewable energy source relies on Earth's internal heat?", "Geothermal energy", "Solar power", "Wind power", "Hydroelectric power"});
-//        allQuestions.add(new String[]{"What is the primary source of indoor air pollution in developing countries?", "Cooking with solid fuels", "Building materials", "Consumer products", "Electronic devices"});
-//        allQuestions.add(new String[]{"Which of the following statements about electric vehicles is accurate?", "Their overall environmental impact depends on the source of electricity", "They have zero environmental impact", "They always produce more emissions in manufacturing than they save", "They require more maintenance than conventional vehicles"});
-//        allQuestions.add(new String[]{"What is meant by the term 'carbon budget'?", "The cumulative amount of carbon emissions allowed to limit warming to a specific level", "The amount a company is willing to spend on carbon offsets", "A national allocation of carbon permits", "A household's monthly carbon footprint"});
-//        allQuestions.add(new String[]{"Which of the following is a primary benefit of agroforestry?", "Carbon sequestration while maintaining food production", "Elimination of the need for pesticides", "Maximizing crop yields in the short term", "Reducing the need for irrigation"});
-//        allQuestions.add(new String[]{"What is the primary cause of increased atmospheric methane levels in recent decades?", "Human activities including agriculture and fossil fuel extraction", "Natural wetland emissions", "Volcanic eruptions", "Oceanic methane hydrates"});
-//        allQuestions.add(new String[]{"Which of the following best describes a carbon-intensive industry?", "An industry that emits large amounts of greenhouse gases", "An industry that manufactures carbon fiber products", "An industry that focuses on carbon capture technology", "An industry that produces carbon-based fuels"});
-//    }
-//
-//    private void selectRandomQuestions() {
-//        List<String[]> questionPool = new ArrayList<>(allQuestions);
-//        selectedQuestions.clear();
-//        Random random = new Random();
-//        for (int i = 0; i < QUESTIONS_PER_QUIZ && !questionPool.isEmpty(); i++) {
-//            int randomIndex = random.nextInt(questionPool.size());
-//            selectedQuestions.add(questionPool.get(randomIndex));
-//            questionPool.remove(randomIndex);
-//        }
-//    }
-//
-//    public String[] getCurrentQuestion() {
-//        return selectedQuestions.get(currentQuestionIndex);
-//    }
-//
-//    public void checkAnswer(String answer) {
-//        if (answer.equals(selectedQuestions.get(currentQuestionIndex)[1])) {
-//            score++;
-//        }
-//        currentQuestionIndex++;
-//    }
-//
-//    public boolean hasMoreQuestions() {
-//        return currentQuestionIndex < selectedQuestions.size();
-//    }
-//
-//    public int getScore() {
-//        return score;
-//    }
-//
-//    public int getTotalQuestions() {
-//        return selectedQuestions.size();
-//    }
-//
-//    public int getCurrentQuestionNumber() {
-//        return currentQuestionIndex + 1;
-//    }
-//
-//    public String getCurrentCategory() {
-//        return "Environment"; // Example category
-//    }
-//
-//    public Map<String, Double> getCategoryPerformance() {
-//        Map<String, Double> performance = new HashMap<>();
-//        performance.put("Environment", 0.75);
-//        performance.put("Energy", 0.85);
-//        return performance;
-//    }
-//}
-
