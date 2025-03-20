@@ -6,6 +6,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.awt.geom.RoundRectangle2D;
+import javax.swing.plaf.basic.BasicButtonUI;
 
 
 public class EcoSparkApp extends JFrame {
@@ -14,7 +16,6 @@ public class EcoSparkApp extends JFrame {
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JScrollPane scrollPane;
-    private JPanel frame;
     private TaskManager taskManager;
     private Map<String, JComponent> formFields = new HashMap<>();
     private JPanel carbonFootprintPanel;
@@ -28,7 +29,6 @@ public class EcoSparkApp extends JFrame {
 
     private Map<String, String> userCredentials = new HashMap<>(); // Store user credentials (email -> password)
     private Map<String, String> userNames = new HashMap<>(); // Store usernames (email -> name)
-    private Map<String, Boolean> taskCompletionStatus = new HashMap<>(); // Store user task completion status (email_taskId -> completed)
     private Map<String, Profile> userProfiles = new HashMap<>(); // Store user profiles (email -> Profile)
 
     public static void main(String[] args) {
@@ -76,24 +76,140 @@ public class EcoSparkApp extends JFrame {
     }
 
     public JPanel createQuizPanel() {
-        quizPanel = new JPanel();
+        quizPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setPaint(UIConstants.GREEN_CHECK);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+
         quizPanel.setLayout(new BoxLayout(quizPanel, BoxLayout.Y_AXIS));
-        quizPanel.setBackground(new Color(230, 245, 240)); // Pastel green
+        quizPanel.setBorder(new EmptyBorder(40, 30, 40, 30));
+
+        JPanel questionContainer = new JPanel();
+        questionContainer.setOpaque(false);
+        questionContainer.setLayout(new BorderLayout());
 
         questionLabel = new JLabel("", SwingConstants.CENTER);
-        questionLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        quizPanel.add(questionLabel);
+        questionLabel.setFont(UIConstants.BUTTON_FONT);
+        questionLabel.setForeground(Color.WHITE);
+        questionLabel.setBorder(new EmptyBorder(0, 0, 50, 0));
+        questionContainer.add(questionLabel, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(2, 2, 10, 10));
-        buttonPanel.setBackground(new Color(230, 245, 240));
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(4, 1, 0, 15));
+        buttonPanel.setOpaque(false);
+
         optionButtons = new JButton[4];
         for (int i = 0; i < 4; i++) {
             optionButtons[i] = new JButton();
-            optionButtons[i].setBackground(new Color(255, 239, 213)); // Pastel orange
+            optionButtons[i].setFont(UIConstants.BUTTON_FONT);
+            optionButtons[i].setForeground(new Color(60, 60, 60));
+            optionButtons[i].setBackground(Color.WHITE);
+            optionButtons[i].setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEmptyBorder(5, 10, 5, 10),
+                    BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(new Color(240, 240, 240), 1),
+                            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+                    )
+            ));
+
+            optionButtons[i].setLayout(new BorderLayout());
+            JPanel buttonContent = new JPanel(new BorderLayout());
+            buttonContent.setOpaque(false);
+            JLabel bullet = new JLabel("●");
+            bullet.setForeground(new Color(180, 180, 200));
+            bullet.setFont(UIConstants.BUTTON_FONT);
+            bullet.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+            buttonContent.add(bullet, BorderLayout.WEST);
+
+            JLabel textLabel = new JLabel(optionButtons[i].getText());
+            textLabel.setFont(optionButtons[i].getFont());
+            textLabel.setForeground(optionButtons[i].getForeground());
+            buttonContent.add(textLabel, BorderLayout.CENTER);
+
+            optionButtons[i].add(buttonContent);
+
+            optionButtons[i].setUI(new BasicButtonUI() {
+                @Override
+                public void paint(Graphics g, JComponent c) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    AbstractButton b = (AbstractButton) c;
+                    ButtonModel model = b.getModel();
+                    RoundRectangle2D roundedRectangle = new RoundRectangle2D.Float(0, 0, c.getWidth()-1, c.getHeight()-1, 25, 25);
+                    g2.setColor(b.getBackground());
+                    g2.fill(roundedRectangle);
+
+                    if (model.isRollover()) {
+                        g2.setColor(new Color(240, 240, 255));
+                        g2.draw(roundedRectangle);
+                    }
+
+                    g2.dispose();
+                    super.paint(g, c);
+                }
+            });
+
             optionButtons[i].addActionListener(new AnswerListener());
             buttonPanel.add(optionButtons[i]);
         }
+
+        JPanel submitPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        submitPanel.setOpaque(false);
+        submitPanel.setBorder(new EmptyBorder(30, 0, 0, 0));
+
+        JButton submitButton = new JButton("Submit");
+        submitButton.setFont(UIConstants.BUTTON_FONT);
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setBackground(new Color(150, 130, 170));
+        submitButton.setBorder(BorderFactory.createEmptyBorder(12, 40, 12, 40));
+        submitButton.setFocusPainted(false);
+
+        submitButton.setUI(new BasicButtonUI() {
+            @Override
+            public void paint(Graphics g, JComponent c) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                AbstractButton b = (AbstractButton) c;
+                ButtonModel model = b.getModel();
+
+                RoundRectangle2D roundedRectangle = new RoundRectangle2D.Float(0, 0, c.getWidth()-1, c.getHeight()-1, 25, 25);
+                g2.setColor(b.getBackground());
+                g2.fill(roundedRectangle);
+
+                if (model.isRollover()) {
+                    g2.setColor(new Color(170, 150, 190));
+                    g2.fill(roundedRectangle);
+                }
+                g2.dispose();
+                super.paint(g, c);
+            }
+        });
+
+        submitPanel.add(submitButton);
+        quizPanel.add(questionContainer);
         quizPanel.add(buttonPanel);
+        quizPanel.add(submitPanel);
+
+        submitButton.addActionListener(e -> {
+            JButton clickedButton = null;
+            for (JButton button : optionButtons) {
+                if (button.getModel().isPressed()) {
+                    clickedButton = button;
+                    break;
+                }
+            }
+
+            if (clickedButton != null) {
+                backend.checkAnswer(clickedButton.getText());
+                loadQuestion();
+            }
+        });
 
         loadQuestion();
         return quizPanel;
@@ -104,7 +220,17 @@ public class EcoSparkApp extends JFrame {
             String[] qData = backend.getCurrentQuestion();
             questionLabel.setText(qData[0]);
             for (int i = 0; i < 4; i++) {
-                optionButtons[i].setText(qData[i + 1]);
+                for (Component comp : optionButtons[i].getComponents()) {
+                    if (comp instanceof JPanel) {
+                        JPanel panel = (JPanel) comp;
+                        for (Component innerComp : panel.getComponents()) {
+                            if (innerComp instanceof JLabel && !(((JLabel) innerComp).getText().equals("●"))) {
+                                ((JLabel) innerComp).setText(qData[i + 1]);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         } else {
             showResults();
@@ -123,107 +249,6 @@ public class EcoSparkApp extends JFrame {
             loadQuestion();
         }
     }
-
-//    private void createQuizPanel() {
-//        JPanel quizPanel = new JPanel(new BorderLayout());
-//        quizPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-//
-//        JPanel headerPanel = new JPanel(new BorderLayout());
-//        JLabel titleLabel = new JLabel("Climate Change Knowledge Quiz");
-//        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-//        headerPanel.add(titleLabel, BorderLayout.WEST);
-//
-//        JButton backButton = new JButton("Back to Dashboard");
-//        backButton.addActionListener(e -> {
-//            CardLayout cl = (CardLayout) mainPanel.getLayout();
-//            cl.show(mainPanel, "dashboard");
-//        });
-//        headerPanel.add(backButton, BorderLayout.EAST);
-//
-//        JPanel quizContentPanel = new JPanel();
-//        quizContentPanel.setLayout(new BoxLayout(quizContentPanel, BoxLayout.Y_AXIS));
-//
-//        JLabel quizInstructionsLabel = new JLabel("Test your knowledge about climate change and its impacts");
-//        quizInstructionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-//        quizInstructionsLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-//
-//        JPanel questionPanel = new JPanel();
-//        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
-//        questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-//
-//        JLabel questionLabel = new JLabel();
-//        questionLabel.setFont(new Font("Arial", Font.BOLD, 14));
-//
-//        JRadioButton option1 = new JRadioButton();
-//        JRadioButton option2 = new JRadioButton();
-//        JRadioButton option3 = new JRadioButton();
-//        JRadioButton option4 = new JRadioButton();
-//
-//        ButtonGroup buttonGroup = new ButtonGroup();
-//        buttonGroup.add(option1);
-//        buttonGroup.add(option2);
-//        buttonGroup.add(option3);
-//        buttonGroup.add(option4);
-//
-//        JButton submitButton = new JButton("Submit Answer");
-//        submitButton.addActionListener(e -> {
-//            char selectedAnswer = ' ';
-//            if (option1.isSelected()) {
-//                selectedAnswer = 'A';
-//            } else if (option2.isSelected()) {
-//                selectedAnswer = 'B';
-//            } else if (option3.isSelected()) {
-//                selectedAnswer = 'C';
-//            } else if (option4.isSelected()) {
-//                selectedAnswer = 'D';
-//            }
-//
-//            boolean hasNextQuestion = quizBackend.submitAnswer(selectedAnswer);
-//            if (hasNextQuestion) {
-//                displayQuestion(quizBackend.getCurrentQuestion(), questionLabel, option1, option2, option3, option4);
-//            } else {
-//                QuizResult result = quizBackend.getQuizResult();
-//                displayResults(result);
-//            }
-//        });
-//
-//        questionPanel.add(questionLabel);
-//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-//        questionPanel.add(option1);
-//        questionPanel.add(option2);
-//        questionPanel.add(option3);
-//        questionPanel.add(option4);
-//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-//        questionPanel.add(submitButton);
-//
-//        quizContentPanel.add(quizInstructionsLabel);
-//        quizContentPanel.add(questionPanel);
-//
-//        JScrollPane scrollPane = new JScrollPane(quizContentPanel);
-//        scrollPane.setBorder(BorderFactory.createTitledBorder("Questions"));
-//
-//        quizPanel.add(headerPanel, BorderLayout.NORTH);
-//        quizPanel.add(scrollPane, BorderLayout.CENTER);
-//
-//
-//        mainPanel.add(quizPanel, "quiz");
-//
-//        // Initialize the quiz
-//        quizBackend = new QuizBackend();
-//        displayQuestion(quizBackend.getCurrentQuestion(), questionLabel, option1, option2, option3, option4);
-//    }
-
-    private void displayQuestion(Question question, JLabel questionLabel, JRadioButton option1, JRadioButton option2, JRadioButton option3, JRadioButton option4) {
-        if (question != null) {
-            questionLabel.setText(question.getQuestionText());
-            List<String> options = question.getOptions();
-            option1.setText(options.get(0));
-            option2.setText(options.get(1));
-            option3.setText(options.get(2));
-            option4.setText(options.get(3));
-        }
-    }
-
 
     private boolean isUserLoggedIn() {
         return currentUser != null;
