@@ -397,7 +397,7 @@ public class EcoSparkApp extends JFrame {
             }
 
             if (clickedButton != null) {
-                backend.checkAnswer(clickedButton.getText());
+                backend.checkAnswer(clickedButton.getName());
                 loadQuestion();
             }
         });
@@ -416,6 +416,7 @@ public class EcoSparkApp extends JFrame {
             questionLabel.setText((String) qData.get("questionText"));
             List<String> options = (List<String>) qData.get("options");
             for (int i = 0; i < 4; i++) {
+                optionButtons[i].setName(options.get(i));
                 for (Component comp : optionButtons[i].getComponents()) {
                     if (comp instanceof JPanel) {
                         JPanel panel = (JPanel) comp;
@@ -443,7 +444,7 @@ public class EcoSparkApp extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             JButton clickedButton = (JButton) e.getSource();
-            boolean isCorrect = backend.checkAnswer(clickedButton.getText().trim());
+            boolean isCorrect = backend.checkAnswer(clickedButton.getName());
 
             if (isCorrect) {
                 clickedButton.setBackground(Color.GREEN);

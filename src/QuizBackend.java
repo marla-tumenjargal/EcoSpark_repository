@@ -564,15 +564,19 @@ public class QuizBackend {
     }
 
     public boolean checkAnswer(String answer) {
-
         Map<String, Object> currentQuestion = quizQuestions.poll();
         String correctAnswer = (String) currentQuestion.get("correctAnswer");
+        String category = (String) currentQuestion.get("category");
 
-        if (correctAnswer.equals(answer)) {
+        boolean isCorrect = correctAnswer.equals(answer);
+        if (isCorrect) {
             score++;
-            return true;
         }
-        return false;
+
+        // Make sure to update category performance
+        updateCategoryPerformance(category, isCorrect);
+
+        return isCorrect;
     }
 
     // Updates performance metrics for a specific category
