@@ -1,6 +1,4 @@
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class Task {
     private int id;
@@ -8,7 +6,6 @@ public class Task {
     private String description;
     private int pointsValue;
     private boolean completed;
-    private Date completionDate;
     private String type;
     private static int taskIdCounter = 1;
 
@@ -19,17 +16,6 @@ public class Task {
         this.pointsValue = pointsValue;
         this.completed = false;
         this.type = type;
-    }
-
-    public void completeTask(Profile profile) {
-        if (!this.completed) {
-            this.completed = true;
-            this.completionDate = new Date();
-            profile.addPoints(this.pointsValue);
-            System.out.println("Task '" + this.title + "' completed! You earned " + this.pointsValue + " points.");
-        } else {
-            System.out.println("This task has already been completed.");
-        }
     }
 
     // Getters
@@ -51,10 +37,6 @@ public class Task {
 
     public boolean isCompleted() {
         return completed;
-    }
-
-    public Date getCompletionDate() {
-        return completionDate;
     }
 
     public String getType() {

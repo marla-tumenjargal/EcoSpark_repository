@@ -1,9 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DashboardPanel extends JPanel {
     private ApplicationModel model;
@@ -108,6 +106,7 @@ public class DashboardPanel extends JPanel {
             allTasksPanel.add(createTaskItem(allTasks.get(i)));
         }
 
+
         JScrollPane allTasksScrollPane = new JScrollPane(allTasksPanel);
         allTasksScrollPane.setBorder(BorderFactory.createEmptyBorder());
         allTasksScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -120,10 +119,6 @@ public class DashboardPanel extends JPanel {
         JPanel favoriteTasksPanel = new JPanel();
         favoriteTasksPanel.setLayout(new BoxLayout(favoriteTasksPanel, BoxLayout.Y_AXIS));
         favoriteTasksPanel.setBackground(Color.WHITE);
-
-        for (Task task : currentUser.getFavoriteTasks()) {
-            favoriteTasksPanel.add(createTaskItem(task));
-        }
 
         JScrollPane favoriteTasksScrollPane = new JScrollPane(favoriteTasksPanel);
         favoriteTasksScrollPane.setBorder(BorderFactory.createEmptyBorder());

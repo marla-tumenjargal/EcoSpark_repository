@@ -9,7 +9,6 @@ import java.util.List;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-
 public class EcoSparkApp extends JFrame {
     private ApplicationModel model;
     private Profile currentUser;
@@ -63,7 +62,6 @@ public class EcoSparkApp extends JFrame {
         createHeroSection();
         createOfferSection();
         createAboutSection();
-        createFooterSection();
         createQuizPanel();
 
         scrollPane = new JScrollPane(mainPanel);
@@ -140,7 +138,7 @@ public class EcoSparkApp extends JFrame {
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     AbstractButton b = (AbstractButton) c;
                     ButtonModel model = b.getModel();
-                    RoundRectangle2D roundedRectangle = new RoundRectangle2D.Float(0, 0, c.getWidth()-1, c.getHeight()-1, 25, 25);
+                    RoundRectangle2D roundedRectangle = new RoundRectangle2D.Float(0, 0, c.getWidth() - 1, c.getHeight() - 1, 25, 25);
                     g2.setColor(b.getBackground());
                     g2.fill(roundedRectangle);
 
@@ -178,7 +176,7 @@ public class EcoSparkApp extends JFrame {
                 AbstractButton b = (AbstractButton) c;
                 ButtonModel model = b.getModel();
 
-                RoundRectangle2D roundedRectangle = new RoundRectangle2D.Float(0, 0, c.getWidth()-1, c.getHeight()-1, 25, 25);
+                RoundRectangle2D roundedRectangle = new RoundRectangle2D.Float(0, 0, c.getWidth() - 1, c.getHeight() - 1, 25, 25);
                 g2.setColor(b.getBackground());
                 g2.fill(roundedRectangle);
 
@@ -217,15 +215,20 @@ public class EcoSparkApp extends JFrame {
 
     private void loadQuestion() {
         if (backend.hasMoreQuestions()) {
-            String[] qData = backend.getCurrentQuestion();
-            questionLabel.setText(qData[0]);
+            for (JButton button : optionButtons) {
+                button.setBackground(Color.WHITE);
+            }
+
+            Map<String, Object> qData = backend.getCurrentQuestion();
+            questionLabel.setText((String) qData.get("questionText"));
+            List<String> options = (List<String>) qData.get("options");
             for (int i = 0; i < 4; i++) {
                 for (Component comp : optionButtons[i].getComponents()) {
                     if (comp instanceof JPanel) {
                         JPanel panel = (JPanel) comp;
                         for (Component innerComp : panel.getComponents()) {
                             if (innerComp instanceof JLabel && !(((JLabel) innerComp).getText().equals("●"))) {
-                                ((JLabel) innerComp).setText(qData[i + 1]);
+                                ((JLabel) innerComp).setText(options.get(i));
                                 break;
                             }
                         }
@@ -238,15 +241,31 @@ public class EcoSparkApp extends JFrame {
     }
 
     private void showResults() {
-        JOptionPane.showMessageDialog(quizPanel, "Quiz Over! Your Score: " + backend.getScore() + " / " + backend.getTotalQuestions());
+        StringBuilder results = new StringBuilder();
+        results.append("Quiz Over! Your Score: ").append(backend.getScore()).append(" / ").append(backend.getTotalQuestions()).append("\n\n");
+        JOptionPane.showMessageDialog(quizPanel, results.toString());
     }
 
     private class AnswerListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             JButton clickedButton = (JButton) e.getSource();
-            backend.checkAnswer(clickedButton.getText());
-            loadQuestion();
+            boolean isCorrect = backend.checkAnswer(clickedButton.getText().trim());
+
+            if (isCorrect) {
+                clickedButton.setBackground(Color.GREEN);
+            } else {
+                clickedButton.setBackground(Color.RED);
+            }
+
+            Timer timer = new Timer(300, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    loadQuestion();
+                }
+            });
+            timer.setRepeats(false);
+            timer.start();
         }
     }
 
@@ -1332,7 +1351,6 @@ public class EcoSparkApp extends JFrame {
                 createHeroSection();
                 createOfferSection();
                 createAboutSection();
-                createFooterSection();
                 revalidate();
                 repaint();
             });
@@ -1792,84 +1810,5 @@ public class EcoSparkApp extends JFrame {
         textArea.setBackground(Color.WHITE);
         textArea.setAlignmentX(Component.LEFT_ALIGNMENT);
         textArea.setMaximumSize(new Dimension(400, 70));
-    }
-
-    private void createFooterSection() {
-        JPanel footerPanel = new JPanel();
-        footerPanel.setLayout(new BoxLayout(footerPanel, BoxLayout.Y_AXIS));
-        footerPanel.setBackground(Color.WHITE);
-        footerPanel.setBorder(new EmptyBorder(40, 40, 40, 40));
-        footerPanel.setMaximumSize(new Dimension(800, 200));
-
-        JSeparator separator = new JSeparator();
-        separator.setForeground(new Color(230, 230, 230));
-        separator.setMaximumSize(new Dimension(720, 1));
-        separator.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.X_AXIS));
-        contentPanel.setBackground(Color.WHITE);
-        contentPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        contentPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
-
-        JPanel contactPanel = new JPanel();
-        contactPanel.setLayout(new BoxLayout(contactPanel, BoxLayout.Y_AXIS));
-        contactPanel.setBackground(Color.WHITE);
-
-        JLabel contactLabel = new JLabel("Contact:");
-        contactLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        contactLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel emailLabel = new JLabel("ecospark@gmail.com");
-        emailLabel.setFont(UIConstants.BODY_FONT);
-        emailLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        emailLabel.setBorder(new EmptyBorder(5, 0, 15, 0));
-
-        JLabel inquiriesLabel = new JLabel("General Inquiries:");
-        inquiriesLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        inquiriesLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel phoneLabel = new JLabel("385-371-9236");
-        phoneLabel.setFont(UIConstants.BODY_FONT);
-        phoneLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        contactPanel.add(contactLabel);
-        contactPanel.add(emailLabel);
-        contactPanel.add(inquiriesLabel);
-        contactPanel.add(phoneLabel);
-
-        JPanel linksPanel = new JPanel();
-        linksPanel.setLayout(new BoxLayout(linksPanel, BoxLayout.Y_AXIS));
-        linksPanel.setBackground(Color.WHITE);
-        linksPanel.setBorder(new EmptyBorder(0, 100, 0, 0));
-
-        JLabel linksLabel = new JLabel("Quick Links:");
-        linksLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        linksLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        String[] linkLabels = {"Home", "Contact", "About Us", "Courses", "Resources"};
-        for (String label : linkLabels) {
-            JLabel link = new JLabel(label);
-            link.setFont(UIConstants.BODY_FONT);
-            link.setForeground(UIConstants.TEXT_COLOR);
-            link.setAlignmentX(Component.LEFT_ALIGNMENT);
-            link.setBorder(new EmptyBorder(5, 0, 5, 0));
-            link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-            linksPanel.add(link);
-        }
-
-        JPanel socialPanel = new JPanel();
-        socialPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-        socialPanel.setBackground(Color.WHITE);
-
-        contentPanel.add(contactPanel);
-        contentPanel.add(linksPanel);
-        contentPanel.add(Box.createHorizontalGlue());
-        contentPanel.add(socialPanel);
-        footerPanel.add(separator);
-        footerPanel.add(contentPanel);
-
-        mainPanel.add(footerPanel);
     }
 }
