@@ -17,17 +17,20 @@ public class UIConstants {
     static final Color GREEN_CHECK = new Color(120, 180, 120);
 
     public static final Font HEADER_FONT;
+    public static final Font SUBHEADER_FONT;
     public static final Font BODY_FONT;
     public static final Font BUTTON_FONT = new Font("Arial", Font.BOLD, 14);
 
     static {
         Font headerFont = new Font("Arial", Font.BOLD, 36);
+        Font subheaderFont = new Font("Arial", Font.BOLD, 19);
         Font bodyFont = new Font("Arial", Font.PLAIN, 14);
 
         try {
             InputStream poppinsStream = UIConstants.class.getResourceAsStream("/Poppins/Poppins-Medium.ttf");
             if (poppinsStream != null) {
                 headerFont = Font.createFont(Font.TRUETYPE_FONT, poppinsStream).deriveFont(36f);
+                subheaderFont = headerFont.deriveFont(26f);
             }
 
             InputStream dmSansStream = UIConstants.class.getResourceAsStream("/DM_Sans/DMSans-VariableFont_opsz,wght.ttf");
@@ -37,12 +40,14 @@ public class UIConstants {
 
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             ge.registerFont(headerFont);
+            ge.registerFont(subheaderFont);
             ge.registerFont(bodyFont);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         HEADER_FONT = headerFont;
+        SUBHEADER_FONT = subheaderFont;
         BODY_FONT = bodyFont;
     }
 }

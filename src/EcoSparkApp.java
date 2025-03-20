@@ -9,28 +9,22 @@ import java.util.List;
 
 
 public class EcoSparkApp extends JFrame {
-
     private ApplicationModel model;
     private Profile currentUser;
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JScrollPane scrollPane;
-    private JPanel tasksListPanel;
     private JPanel frame;
     private TaskManager taskManager;
-    private JFrame dashboardFrame;
     private Map<String, JComponent> formFields = new HashMap<>();
+    private JPanel carbonFootprintPanel;
+    private QuizBackend backend = new QuizBackend();
+    private JFrame quizFrame;
+    private JPanel quizPanel;
+    private JLabel questionLabel;
+    private JButton[] optionButtons;
 
     CarbonFootprintCalculator calculator = new CarbonFootprintCalculator();
-
-    // Login Panels
-    private JPanel loginPanel;
-    private JPanel registerPanel;
-    JPanel dashboardPanel;
-    private JPanel profilePanel;
-    private JPanel tasksPanel;
-    private JPanel carbonFootprintPanel;
-    private JPanel quizPanel;
 
     private Map<String, String> userCredentials = new HashMap<>(); // Store user credentials (email -> password)
     private Map<String, String> userNames = new HashMap<>(); // Store usernames (email -> name)
@@ -70,6 +64,7 @@ public class EcoSparkApp extends JFrame {
         createOfferSection();
         createAboutSection();
         createFooterSection();
+        createQuizPanel();
 
         scrollPane = new JScrollPane(mainPanel);
         scrollPane.setBorder(null);
@@ -80,6 +75,156 @@ public class EcoSparkApp extends JFrame {
         setVisible(true);
     }
 
+    public JPanel createQuizPanel() {
+        quizPanel = new JPanel();
+        quizPanel.setLayout(new BoxLayout(quizPanel, BoxLayout.Y_AXIS));
+        quizPanel.setBackground(new Color(230, 245, 240)); // Pastel green
+
+        questionLabel = new JLabel("", SwingConstants.CENTER);
+        questionLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        quizPanel.add(questionLabel);
+
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        buttonPanel.setBackground(new Color(230, 245, 240));
+        optionButtons = new JButton[4];
+        for (int i = 0; i < 4; i++) {
+            optionButtons[i] = new JButton();
+            optionButtons[i].setBackground(new Color(255, 239, 213)); // Pastel orange
+            optionButtons[i].addActionListener(new AnswerListener());
+            buttonPanel.add(optionButtons[i]);
+        }
+        quizPanel.add(buttonPanel);
+
+        loadQuestion();
+        return quizPanel;
+    }
+
+    private void loadQuestion() {
+        if (backend.hasMoreQuestions()) {
+            String[] qData = backend.getCurrentQuestion();
+            questionLabel.setText(qData[0]);
+            for (int i = 0; i < 4; i++) {
+                optionButtons[i].setText(qData[i + 1]);
+            }
+        } else {
+            showResults();
+        }
+    }
+
+    private void showResults() {
+        JOptionPane.showMessageDialog(quizPanel, "Quiz Over! Your Score: " + backend.getScore() + " / " + backend.getTotalQuestions());
+    }
+
+    private class AnswerListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JButton clickedButton = (JButton) e.getSource();
+            backend.checkAnswer(clickedButton.getText());
+            loadQuestion();
+        }
+    }
+
+//    private void createQuizPanel() {
+//        JPanel quizPanel = new JPanel(new BorderLayout());
+//        quizPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+//
+//        JPanel headerPanel = new JPanel(new BorderLayout());
+//        JLabel titleLabel = new JLabel("Climate Change Knowledge Quiz");
+//        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+//        headerPanel.add(titleLabel, BorderLayout.WEST);
+//
+//        JButton backButton = new JButton("Back to Dashboard");
+//        backButton.addActionListener(e -> {
+//            CardLayout cl = (CardLayout) mainPanel.getLayout();
+//            cl.show(mainPanel, "dashboard");
+//        });
+//        headerPanel.add(backButton, BorderLayout.EAST);
+//
+//        JPanel quizContentPanel = new JPanel();
+//        quizContentPanel.setLayout(new BoxLayout(quizContentPanel, BoxLayout.Y_AXIS));
+//
+//        JLabel quizInstructionsLabel = new JLabel("Test your knowledge about climate change and its impacts");
+//        quizInstructionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+//        quizInstructionsLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+//
+//        JPanel questionPanel = new JPanel();
+//        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+//        questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+//
+//        JLabel questionLabel = new JLabel();
+//        questionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+//
+//        JRadioButton option1 = new JRadioButton();
+//        JRadioButton option2 = new JRadioButton();
+//        JRadioButton option3 = new JRadioButton();
+//        JRadioButton option4 = new JRadioButton();
+//
+//        ButtonGroup buttonGroup = new ButtonGroup();
+//        buttonGroup.add(option1);
+//        buttonGroup.add(option2);
+//        buttonGroup.add(option3);
+//        buttonGroup.add(option4);
+//
+//        JButton submitButton = new JButton("Submit Answer");
+//        submitButton.addActionListener(e -> {
+//            char selectedAnswer = ' ';
+//            if (option1.isSelected()) {
+//                selectedAnswer = 'A';
+//            } else if (option2.isSelected()) {
+//                selectedAnswer = 'B';
+//            } else if (option3.isSelected()) {
+//                selectedAnswer = 'C';
+//            } else if (option4.isSelected()) {
+//                selectedAnswer = 'D';
+//            }
+//
+//            boolean hasNextQuestion = quizBackend.submitAnswer(selectedAnswer);
+//            if (hasNextQuestion) {
+//                displayQuestion(quizBackend.getCurrentQuestion(), questionLabel, option1, option2, option3, option4);
+//            } else {
+//                QuizResult result = quizBackend.getQuizResult();
+//                displayResults(result);
+//            }
+//        });
+//
+//        questionPanel.add(questionLabel);
+//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+//        questionPanel.add(option1);
+//        questionPanel.add(option2);
+//        questionPanel.add(option3);
+//        questionPanel.add(option4);
+//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+//        questionPanel.add(submitButton);
+//
+//        quizContentPanel.add(quizInstructionsLabel);
+//        quizContentPanel.add(questionPanel);
+//
+//        JScrollPane scrollPane = new JScrollPane(quizContentPanel);
+//        scrollPane.setBorder(BorderFactory.createTitledBorder("Questions"));
+//
+//        quizPanel.add(headerPanel, BorderLayout.NORTH);
+//        quizPanel.add(scrollPane, BorderLayout.CENTER);
+//
+//
+//        mainPanel.add(quizPanel, "quiz");
+//
+//        // Initialize the quiz
+//        quizBackend = new QuizBackend();
+//        displayQuestion(quizBackend.getCurrentQuestion(), questionLabel, option1, option2, option3, option4);
+//    }
+
+    private void displayQuestion(Question question, JLabel questionLabel, JRadioButton option1, JRadioButton option2, JRadioButton option3, JRadioButton option4) {
+        if (question != null) {
+            questionLabel.setText(question.getQuestionText());
+            List<String> options = question.getOptions();
+            option1.setText(options.get(0));
+            option2.setText(options.get(1));
+            option3.setText(options.get(2));
+            option4.setText(options.get(3));
+        }
+    }
+
+
     private boolean isUserLoggedIn() {
         return currentUser != null;
     }
@@ -87,25 +232,18 @@ public class EcoSparkApp extends JFrame {
     private void createCarbonFootprintPanel() {
         getContentPane().remove(scrollPane);
 
-        // Create main panel with white background
         carbonFootprintPanel = new JPanel();
         carbonFootprintPanel.setLayout(new BoxLayout(carbonFootprintPanel, BoxLayout.Y_AXIS));
         carbonFootprintPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         carbonFootprintPanel.setBackground(Color.WHITE);
 
-        // Title
         JLabel titleLabel = new JLabel("Calculate Your Carbon Footprint");
         titleLabel.setFont(UIConstants.HEADER_FONT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Information Panel
         JPanel infoPanel = createInfoPanel();
-
-        // Create tabbed pane for different categories
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setBackground(Color.WHITE);
-
-        // Add tabs with enhanced input fields
         JPanel generalPanel = createGeneralPanel();
         JPanel transportationPanel = createTransportationPanel();
         JPanel foodPanel = createFoodPanel();
@@ -118,15 +256,13 @@ public class EcoSparkApp extends JFrame {
         tabbedPane.addTab("Energy Usage", energyPanel);
         tabbedPane.addTab("Waste & Other", wastePanel);
 
-        // Set the font for the tab headers to BUTTON_FONT
         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
             Component tabComponent = tabbedPane.getTabComponentAt(i);
             if (tabComponent instanceof JComponent) {
-                ((JComponent) tabComponent).setFont(UIConstants.BUTTON_FONT);  // Apply BUTTON_FONT to tab headers
+                ((JComponent) tabComponent).setFont(UIConstants.BUTTON_FONT);
             }
         }
 
-        // Add components to main panel
         carbonFootprintPanel.add(titleLabel);
         carbonFootprintPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         carbonFootprintPanel.add(infoPanel);
@@ -134,7 +270,6 @@ public class EcoSparkApp extends JFrame {
         carbonFootprintPanel.add(tabbedPane);
         tabbedPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
 
-        // Submit button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
         JButton submitButton = new JButton("SUBMIT");
@@ -142,25 +277,20 @@ public class EcoSparkApp extends JFrame {
         submitButton.setPreferredSize(new Dimension(150, 40));
         buttonPanel.add(submitButton);
 
-        // Add submit button with some space
         carbonFootprintPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         carbonFootprintPanel.add(buttonPanel);
 
-        // Results section
         JPanel resultsPanel = createResultsPanel();
 
-        // Add results to main panel
         carbonFootprintPanel.add(Box.createRigidArea(new Dimension(0, 30)));
         carbonFootprintPanel.add(resultsPanel);
 
-        // Create a scroll pane for the carbon footprint panel
         JScrollPane carbonScrollPane = new JScrollPane(carbonFootprintPanel);
         carbonScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         carbonScrollPane.getVerticalScrollBar().setUnitIncrement(16);
         carbonScrollPane.setBorder(null);
         carbonScrollPane.setBackground(Color.WHITE);
 
-        // Submit button action listener with validation
         submitButton.addActionListener(e -> {
             if (validateAllFieldsFilled()) {
                 calculateAndDisplayResults(resultsPanel);
@@ -175,7 +305,6 @@ public class EcoSparkApp extends JFrame {
         getContentPane().add(carbonScrollPane);
         setVisible(true);
     }
-
 
     private boolean validateAllFieldsFilled() {
         for (Map.Entry<String, JComponent> entry : formFields.entrySet()) {
@@ -245,28 +374,23 @@ public class EcoSparkApp extends JFrame {
         resultsPanel.setBackground(Color.WHITE);
         resultsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
-        // Results title
         JLabel footprintLabel = new JLabel("Your Footprint");
         footprintLabel.setFont(UIConstants.HEADER_FONT);
-        footprintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure it's aligned left
+        footprintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Total footprint display
         JLabel totalFootprintLabel = new JLabel("Total Carbon Footprint: 0.00 tons CO2e");
         totalFootprintLabel.setFont(UIConstants.BUTTON_FONT);
-        totalFootprintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure it's aligned left
+        totalFootprintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Breakdown section title
         JLabel breakdownLabel = new JLabel("Breakdown by Category:");
         breakdownLabel.setFont(UIConstants.BUTTON_FONT);
-        breakdownLabel.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure it's aligned left
+        breakdownLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Breakdown panel
         JPanel breakdownPanel = new JPanel();
         breakdownPanel.setBackground(Color.WHITE);
-        breakdownPanel.setLayout(new GridLayout(0, 1, 10, 10));  // Adjust spacing between the rows
+        breakdownPanel.setLayout(new GridLayout(0, 1, 10, 10));
         breakdownPanel.setName("breakdownPanel");
 
-        // Add results components
         resultsPanel.add(footprintLabel);
         resultsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         resultsPanel.add(totalFootprintLabel);
@@ -274,18 +398,13 @@ public class EcoSparkApp extends JFrame {
         resultsPanel.add(breakdownLabel);
         resultsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         resultsPanel.add(breakdownPanel);
-
         totalFootprintLabel.setName("totalFootprintLabel");
-
         return resultsPanel;
     }
 
-
     private void calculateAndDisplayResults(JPanel resultsPanel) {
-        // Get all input values from form fields
         Map<String, Object> inputValues = collectInputValues();
 
-        // Calculate total footprint using the calculator instance
         double totalFootprint = calculator.calculateTotalFootprint(
                 (String) inputValues.get("country"),
                 Integer.parseInt((String) inputValues.get("carMilesPerWeek")),
@@ -299,7 +418,6 @@ public class EcoSparkApp extends JFrame {
                 Double.parseDouble((String) inputValues.get("wasteProduced"))
         );
 
-        // Get breakdown data
         Map<String, Double> footprintData = new HashMap<>();
         footprintData.put("General Usage", calculator.calculateGeneralFootprint((String) inputValues.get("country")));
         footprintData.put("Transportation", calculator.calculateTransportationFootprint(
@@ -320,7 +438,6 @@ public class EcoSparkApp extends JFrame {
                 Double.parseDouble((String) inputValues.get("wasteProduced"))
         ));
 
-        // Update total footprint label
         for (Component comp : resultsPanel.getComponents()) {
             if (comp instanceof JLabel && "totalFootprintLabel".equals(comp.getName())) {
                 ((JLabel) comp).setText("Total Carbon Footprint: " + String.format("%.2f", totalFootprint) + " tons CO2e");
@@ -328,7 +445,6 @@ public class EcoSparkApp extends JFrame {
             }
         }
 
-        // Update breakdown panel
         for (Component comp : resultsPanel.getComponents()) {
             if (comp instanceof JPanel && "breakdownPanel".equals(comp.getName())) {
                 JPanel breakdownPanel = (JPanel) comp;
@@ -345,12 +461,9 @@ public class EcoSparkApp extends JFrame {
                     categoryPanel.add(categoryLabel, BorderLayout.CENTER);
                     breakdownPanel.add(categoryPanel);
                 }
-
                 break;
             }
         }
-
-        // Show results panel
         resultsPanel.setVisible(true);
         revalidate();
         repaint();
@@ -358,8 +471,6 @@ public class EcoSparkApp extends JFrame {
 
     private Map<String, Object> collectInputValues() {
         Map<String, Object> values = new HashMap<>();
-
-        // Collect values from form fields
         for (Map.Entry<String, JComponent> entry : formFields.entrySet()) {
             String key = entry.getKey();
             JComponent component = entry.getValue();
@@ -370,7 +481,6 @@ public class EcoSparkApp extends JFrame {
                 values.put(key, ((JComboBox<?>) component).getSelectedItem().toString());
             }
         }
-
         return values;
     }
 
@@ -391,14 +501,12 @@ public class EcoSparkApp extends JFrame {
         }
     }
 
-    // Enhanced tab panels with 7+ questions each and sample responses
     private JPanel createGeneralPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Create combo boxes with empty selection
         JComboBox<String> countryCombo = new JComboBox<>(new String[]{"", "USA", "Canada", "UK", "China", "India", "Brazil", "Australia", "Other"});
         JComboBox<String> stateCombo = new JComboBox<>(new String[]{"", "Alabama", "Alaska", "Arizona", "California", "Colorado", "New York", "Texas", "Other"});
         JComboBox<String> householdCombo = new JComboBox<>(new String[]{"", "1", "2", "3", "4", "5+"});
@@ -406,7 +514,6 @@ public class EcoSparkApp extends JFrame {
         JComboBox<String> homeCombo = new JComboBox<>(new String[]{"", "Apartment", "Townhouse", "Single Family Home", "Other"});
         JComboBox<String> renewableCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Partial"});
 
-        // Add fields with sample responses
         addFormFieldWithSample(panel, "What country do you live in?", countryCombo, "(e.g., USA)");
         addFormFieldWithSample(panel, "What state do you live in? (US only)", stateCombo, "(e.g., California)");
         addFormFieldWithSample(panel, "How many people are in your household?", householdCombo, "(e.g., 3)");
@@ -431,12 +538,10 @@ public class EcoSparkApp extends JFrame {
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Create combo boxes with empty selection
         JComboBox<String> vehicleTypeCombo = new JComboBox<>(new String[]{"", "SUV", "Sedan", "Truck", "Compact Car", "Hybrid", "Electric Vehicle", "None"});
         JComboBox<String> fuelTypeCombo = new JComboBox<>(new String[]{"", "Gas", "Diesel", "Electric", "Hybrid", "Other"});
         JComboBox<String> carpoolCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Sometimes"});
 
-        // Add fields with sample responses
         addFormFieldWithSample(panel, "How many miles do you drive per week?", createAndRegisterTextField("carMilesPerWeek"), "(e.g., 100)");
         addFormFieldWithSample(panel, "What type of vehicle do you own?", vehicleTypeCombo, "(e.g., Sedan)");
         addFormFieldWithSample(panel, "What type of fuel does your vehicle use?", fuelTypeCombo, "(e.g., Gas)");
@@ -458,14 +563,12 @@ public class EcoSparkApp extends JFrame {
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Create combo boxes with empty selection
         JComboBox<String> dietTypeCombo = new JComboBox<>(new String[]{"", "Vegan", "Vegetarian", "Pescatarian", "Omnivore", "Keto", "Other"});
         JComboBox<String> localFoodCombo = new JComboBox<>(new String[]{"", "0-20%", "21-40%", "41-60%", "61-80%", "81-100%"});
         JComboBox<String> restaurantCombo = new JComboBox<>(new String[]{"", "Daily", "Several times a week", "Weekly", "Monthly", "Rarely"});
         JComboBox<String> foodWasteCombo = new JComboBox<>(new String[]{"", "Very little", "Some", "Average", "Significant", "A lot"});
         JComboBox<String> growFoodCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Some"});
 
-        // Add fields with sample responses
         addFormFieldWithSample(panel, "What type of diet do you follow?", dietTypeCombo, "(e.g., Omnivore)");
         addFormFieldWithSample(panel, "How many meat-containing meals do you eat per week?", createAndRegisterTextField("meatConsumption"), "(e.g., 7)");
         addFormFieldWithSample(panel, "How many dairy-containing meals do you eat per week?", createAndRegisterTextField("dairyConsumption"), "(e.g., 14)");
@@ -489,12 +592,10 @@ public class EcoSparkApp extends JFrame {
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Create combo boxes with empty selection
         JComboBox<String> energySourceCombo = new JComboBox<>(new String[]{"", "Coal", "Natural Gas", "Nuclear", "Solar", "Wind", "Hydroelectric", "Other"});
         JComboBox<String> efficientAppliancesCombo = new JComboBox<>(new String[]{"", "All", "Most", "Some", "Few", "None"});
         JComboBox<String> ledBulbsCombo = new JComboBox<>(new String[]{"", "All", "Most", "Some", "None"});
 
-        // Add fields with sample responses
         addFormFieldWithSample(panel, "What is your average monthly electricity usage (kWh)?", createAndRegisterTextField("electricityUsage"), "(e.g., 500)");
         addFormFieldWithSample(panel, "What is your primary source of electricity?", energySourceCombo, "(e.g., Natural Gas)");
         addFormFieldWithSample(panel, "What is your average monthly natural gas usage?", createAndRegisterTextField("gasUsage"), "(e.g., 100 therms)");
@@ -516,14 +617,12 @@ public class EcoSparkApp extends JFrame {
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Create combo boxes with empty selection
         JComboBox<String> recycleCombo = new JComboBox<>(new String[]{"", "Always", "Often", "Sometimes", "Rarely", "Never"});
         JComboBox<String> compostCombo = new JComboBox<>(new String[]{"", "Yes", "No", "Sometimes"});
         JComboBox<String> clothesCombo = new JComboBox<>(new String[]{"", "Weekly", "Monthly", "Quarterly", "Yearly", "Rarely"});
         JComboBox<String> electronicsCombo = new JComboBox<>(new String[]{"", "Monthly", "Quarterly", "Yearly", "Every few years", "Rarely"});
         JComboBox<String> plasticCombo = new JComboBox<>(new String[]{"", "Daily", "Often", "Sometimes", "Rarely", "Never"});
 
-        // Add fields with sample responses
         addFormFieldWithSample(panel, "How much waste do you produce per week (kg)?", createAndRegisterTextField("wasteProduced"), "(e.g., 10)");
         addFormFieldWithSample(panel, "Do you recycle?", recycleCombo, "(e.g., Often)");
         addFormFieldWithSample(panel, "Do you compost?", compostCombo, "(e.g., Sometimes)");
@@ -547,7 +646,6 @@ public class EcoSparkApp extends JFrame {
         return textField;
     }
 
-    // Helper method to add form fields with sample responses
     private void addFormFieldWithSample(JPanel panel, String labelText, JComponent inputComponent, String sampleText) {
         JPanel fieldPanel = new JPanel();
         fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.X_AXIS));
@@ -582,31 +680,26 @@ public class EcoSparkApp extends JFrame {
     private void createLoginPanel() {
         getContentPane().remove(scrollPane);
 
-        // Make the login panel
         JPanel loginPanel = new JPanel();
         loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
         loginPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        // Title
         JLabel titleLabel = new JLabel("Login to EcoSpark");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // email
         JPanel emailPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel emailLabel = new JLabel("Email:");
         JTextField emailField = new JTextField(20);
         emailPanel.add(emailLabel);
         emailPanel.add(emailField);
 
-        // password
         JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel passwordLabel = new JLabel("Password:");
         JPasswordField passwordField = new JPasswordField(20);
         passwordPanel.add(passwordLabel);
         passwordPanel.add(passwordField);
 
-        // buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(new Color(240, 248, 255));
         JButton loginButton = new JButton("Log In");
@@ -614,7 +707,6 @@ public class EcoSparkApp extends JFrame {
         buttonPanel.add(loginButton);
         buttonPanel.add(backButton);
 
-        // status
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -638,14 +730,10 @@ public class EcoSparkApp extends JFrame {
             }
 
             if (userCredentials.containsKey(email) && userCredentials.get(email).equals(password)) {
-                // Set current user
-
                 model.setCurrentUser(currentUser);
                 currentUser = userProfiles.get(email);
                 statusLabel.setText("Login successful!");
-                statusLabel.setForeground(Color.GREEN);
-
-                // Switch back to main view
+                statusLabel.setForeground(UIConstants.GREEN_CHECK);
                 getContentPane().remove(loginPanel);
                 getContentPane().add(scrollPane);
                 revalidate();
@@ -657,7 +745,6 @@ public class EcoSparkApp extends JFrame {
         });
 
         backButton.addActionListener(e -> {
-            // Remove login panel and restore main panel
             getContentPane().remove(loginPanel);
             getContentPane().add(scrollPane);
             revalidate();
@@ -673,45 +760,38 @@ public class EcoSparkApp extends JFrame {
     private void createRegisterPanel() {
         getContentPane().remove(scrollPane);
 
-        // Make the register panel
         JPanel registerPanel = new JPanel();
         registerPanel.setLayout(new BoxLayout(registerPanel, BoxLayout.Y_AXIS));
         registerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        // Title
         JLabel titleLabel = new JLabel("Create Your EcoSpark Account");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(UIConstants.SUBHEADER_FONT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Name
         JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel nameLabel = new JLabel("Full Name:");
         JTextField nameField = new JTextField(20);
         namePanel.add(nameLabel);
         namePanel.add(nameField);
 
-        // Email
         JPanel emailPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel emailLabel = new JLabel("Email:");
         JTextField emailField = new JTextField(20);
         emailPanel.add(emailLabel);
         emailPanel.add(emailField);
 
-        // Password
         JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel passwordLabel = new JLabel("Password:");
         JPasswordField passwordField = new JPasswordField(20);
         passwordPanel.add(passwordLabel);
         passwordPanel.add(passwordField);
 
-        // Confirm Password
         JPanel confirmPasswordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel confirmPasswordLabel = new JLabel("Confirm Password:");
         JPasswordField confirmPasswordField = new JPasswordField(20);
         confirmPasswordPanel.add(confirmPasswordLabel);
         confirmPasswordPanel.add(confirmPasswordField);
 
-        // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(new Color(240, 248, 255));
         JButton registerButton = new JButton("Register");
@@ -719,7 +799,6 @@ public class EcoSparkApp extends JFrame {
         buttonPanel.add(registerButton);
         buttonPanel.add(backButton);
 
-        // Status
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -734,15 +813,12 @@ public class EcoSparkApp extends JFrame {
         registerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         registerPanel.add(statusLabel);
 
-        // Button actions
-
         registerButton.addActionListener(e -> {
             String name = nameField.getText();
             String email = emailField.getText();
             String password = new String(passwordField.getPassword());
             String confirmPassword = new String(confirmPasswordField.getPassword());
 
-            // Simple validation check
             if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                 statusLabel.setText("All fields must be filled out!");
                 statusLabel.setForeground(Color.RED);
@@ -750,16 +826,15 @@ public class EcoSparkApp extends JFrame {
                 statusLabel.setText("Passwords do not match!");
                 statusLabel.setForeground(Color.RED);
             } else {
-                // Store the new user credentials
                 userCredentials.put(email, password);
                 userNames.put(email, name);
                 userProfiles.put(email, new Profile(name, password, email));
 
                 statusLabel.setText("Account created successfully!");
-                statusLabel.setForeground(Color.GREEN);
+                statusLabel.setFont(UIConstants.BUTTON_FONT);
+                statusLabel.setForeground(UIConstants.GREEN_CHECK);
 
-                // Return to main view after a short delay
-                Timer timer = new Timer(1500, event -> {
+                Timer timer = new Timer(1300, event -> {
                     getContentPane().remove(registerPanel);
                     getContentPane().add(scrollPane);
                     revalidate();
@@ -788,7 +863,6 @@ public class EcoSparkApp extends JFrame {
         heroPanel.setBorder(new EmptyBorder(0, 40, 40, 40));
         heroPanel.setMaximumSize(new Dimension(850, 600));
 
-        // Text section
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setBackground(Color.WHITE);
@@ -799,7 +873,6 @@ public class EcoSparkApp extends JFrame {
         welcomePanel.setBackground(Color.WHITE);
         welcomePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Check if user is logged in and display personalized welcome
         String welcomeStart = "Welcome to EcoSpark";
         String userName = "";
         if (currentUser != null) {
@@ -838,14 +911,12 @@ public class EcoSparkApp extends JFrame {
         descriptionText.setAlignmentX(Component.LEFT_ALIGNMENT);
         descriptionText.setMaximumSize(new Dimension(350, 150));
 
-        // Buttons
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         buttonPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        // Only show Join/Login buttons if not logged in
         if (currentUser == null) {
             JButton joinButton = new RoundedButton("Join Now", UIConstants.BUTTON_BLUE, Color.WHITE);
             joinButton.setPreferredSize(new Dimension(180, 80));
@@ -858,26 +929,8 @@ public class EcoSparkApp extends JFrame {
             buttonPanel.add(joinButton);
             buttonPanel.add(Box.createRigidArea(new Dimension(15, 0)));
             buttonPanel.add(loginButton);
-        } else {
-            // If logged in, show a dashboard button instead
-            JButton dashboardButton = new JButton("GO TO DASHBOARD");
-            dashboardButton.setBackground(UIConstants.BUTTON_BLUE);
-            dashboardButton.setForeground(Color.WHITE);
-            dashboardButton.setFont(UIConstants.BUTTON_FONT);
-            dashboardButton.setFocusPainted(false);
-            dashboardButton.setBorderPainted(false);
-            dashboardButton.setPreferredSize(new Dimension(200, 40));
-            dashboardButton.setMaximumSize(new Dimension(200, 40));
-            // Add action for dashboard
-            dashboardButton.addActionListener(e -> {
-                // Navigate to dashboard
-                // Add your dashboard navigation code here
-            });
-
-            buttonPanel.add(dashboardButton);
         }
 
-        // Stats
         JPanel statsPanel = new JPanel();
         statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.X_AXIS));
         statsPanel.setBackground(Color.WHITE);
@@ -915,10 +968,8 @@ public class EcoSparkApp extends JFrame {
 
         actionsPanel.add(actionsNumber);
         actionsPanel.add(actionsLabel);
-
         statsPanel.add(resourcesPanel);
         statsPanel.add(actionsPanel);
-
         textPanel.add(welcomePanel);
         textPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         textPanel.add(descriptionText);
@@ -937,9 +988,6 @@ public class EcoSparkApp extends JFrame {
             imageLabel.setIcon(homeGraphic);
         } catch (Exception e) {
             imageLabel.setText("Image Not Found");
-            imageLabel.setFont(new Font("Arial", Font.BOLD, 14));
-            imageLabel.setPreferredSize(new Dimension(300, 400));
-            imageLabel.setOpaque(true);
         }
 
         imagePanel.add(imageLabel, new GridBagConstraints());
@@ -959,12 +1007,10 @@ public class EcoSparkApp extends JFrame {
         navPanel.setMaximumSize(new Dimension(800, 70));
         navPanel.setPreferredSize(new Dimension(800, 70));
 
-        // EcoSpark Header - only this text now
         JLabel logoLabel = new JLabel("EcoSpark");
         logoLabel.setFont(new Font("Arial", Font.BOLD, 20));
         logoLabel.setBorder(new EmptyBorder(0, 20, 0, 0));
 
-        // Profile icon
         JPanel profilePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         profilePanel.setBackground(Color.WHITE);
 
@@ -980,13 +1026,10 @@ public class EcoSparkApp extends JFrame {
         profileButton.setContentAreaFilled(false);
         profileButton.setFocusPainted(false);
 
-        // Add action listener to profile button
         profileButton.addActionListener(e -> {
             if (currentUser != null) {
-                // User is logged in, show profile edit panel
                 createProfileEditPanel();
             } else {
-                // User is not logged in, redirect to login
                 JOptionPane.showMessageDialog(this,
                         "Please log in to view your profile",
                         "Login Required",
@@ -996,27 +1039,18 @@ public class EcoSparkApp extends JFrame {
         });
 
         profilePanel.add(profileButton);
-
-        // Add EcoSpark logo to the left, and the profile icon to the right
         navPanel.add(logoLabel, BorderLayout.WEST);
         navPanel.add(profilePanel, BorderLayout.EAST);
-
-        // Add separator line
         JSeparator separator = new JSeparator();
         separator.setForeground(new Color(230, 230, 230));
-
         JPanel navContainer = new JPanel();
         navContainer.setLayout(new BoxLayout(navContainer, BoxLayout.Y_AXIS));
         navContainer.add(navPanel);
         navContainer.add(separator);
         navContainer.setBackground(Color.WHITE);
         navContainer.setMaximumSize(new Dimension(800, 71));
-
         mainPanel.add(navContainer);
     }
-
-
-
 
     private JPanel createIconPanel(Color bgColor, String iconText) {
         JPanel iconPanel = new JPanel();
@@ -1033,73 +1067,73 @@ public class EcoSparkApp extends JFrame {
         return iconPanel;
     }
 
-    private void createQuizPanel() {
-        JPanel quizPanel = new JPanel(new BorderLayout());
-        quizPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        JLabel titleLabel = new JLabel("Climate Change Knowledge Quiz");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-
-        JButton backButton = new JButton("Back to Dashboard");
-        backButton.addActionListener(e -> cardLayout.show(mainPanel, "dashboard"));
-        headerPanel.add(backButton, BorderLayout.EAST);
-
-        JPanel quizContentPanel = new JPanel();
-        quizContentPanel.setLayout(new BoxLayout(quizContentPanel, BoxLayout.Y_AXIS));
-
-        JLabel quizInstructionsLabel = new JLabel("Test your knowledge about climate change and its impacts");
-        quizInstructionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        quizInstructionsLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JPanel questionPanel = new JPanel();
-        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
-        questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JLabel questionLabel = new JLabel("1. What is the main greenhouse gas contributing to climate change?");
-        questionLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-        JRadioButton option1 = new JRadioButton("Carbon Dioxide (CO₂)");
-        JRadioButton option2 = new JRadioButton("Oxygen (O₂)");
-        JRadioButton option3 = new JRadioButton("Nitrogen (N₂)");
-        JRadioButton option4 = new JRadioButton("Hydrogen (H₂)");
-
-        ButtonGroup buttonGroup = new ButtonGroup();
-        buttonGroup.add(option1);
-        buttonGroup.add(option2);
-        buttonGroup.add(option3);
-        buttonGroup.add(option4);
-
-        JButton submitButton = new JButton("Submit Answer");
-        submitButton.addActionListener(e -> {
-            if (option1.isSelected()) {
-                JOptionPane.showMessageDialog(frame, "Correct! Carbon dioxide is the primary greenhouse gas contributing to climate change.");
-            } else {
-                JOptionPane.showMessageDialog(frame, "Incorrect. The correct answer is Carbon Dioxide (CO₂).");
-            }
-        });
-
-        questionPanel.add(questionLabel);
-        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        questionPanel.add(option1);
-        questionPanel.add(option2);
-        questionPanel.add(option3);
-        questionPanel.add(option4);
-        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        questionPanel.add(submitButton);
-
-        quizContentPanel.add(quizInstructionsLabel);
-        quizContentPanel.add(questionPanel);
-
-        JScrollPane scrollPane = new JScrollPane(quizContentPanel);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Questions"));
-
-        quizPanel.add(headerPanel, BorderLayout.NORTH);
-        quizPanel.add(scrollPane, BorderLayout.CENTER);
-
-        mainPanel.add(quizPanel, "quiz");
-    }
+//    private void createQuizPanel() {
+//        JPanel quizPanel = new JPanel(new BorderLayout());
+//        quizPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+//
+//        JPanel headerPanel = new JPanel(new BorderLayout());
+//        JLabel titleLabel = new JLabel("Climate Change Knowledge Quiz");
+//        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+//        headerPanel.add(titleLabel, BorderLayout.WEST);
+//
+//        JButton backButton = new JButton("Back to Dashboard");
+//        backButton.addActionListener(e -> cardLayout.show(mainPanel, "dashboard"));
+//        headerPanel.add(backButton, BorderLayout.EAST);
+//
+//        JPanel quizContentPanel = new JPanel();
+//        quizContentPanel.setLayout(new BoxLayout(quizContentPanel, BoxLayout.Y_AXIS));
+//
+//        JLabel quizInstructionsLabel = new JLabel("Test your knowledge about climate change and its impacts");
+//        quizInstructionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+//        quizInstructionsLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+//
+//        JPanel questionPanel = new JPanel();
+//        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+//        questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+//
+//        JLabel questionLabel = new JLabel("1. What is the main greenhouse gas contributing to climate change?");
+//        questionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+//
+//        JRadioButton option1 = new JRadioButton("Carbon Dioxide (CO₂)");
+//        JRadioButton option2 = new JRadioButton("Oxygen (O₂)");
+//        JRadioButton option3 = new JRadioButton("Nitrogen (N₂)");
+//        JRadioButton option4 = new JRadioButton("Hydrogen (H₂)");
+//
+//        ButtonGroup buttonGroup = new ButtonGroup();
+//        buttonGroup.add(option1);
+//        buttonGroup.add(option2);
+//        buttonGroup.add(option3);
+//        buttonGroup.add(option4);
+//
+//        JButton submitButton = new JButton("Submit Answer");
+//        submitButton.addActionListener(e -> {
+//            if (option1.isSelected()) {
+//                JOptionPane.showMessageDialog(frame, "Correct! Carbon dioxide is the primary greenhouse gas contributing to climate change.");
+//            } else {
+//                JOptionPane.showMessageDialog(frame, "Incorrect. The correct answer is Carbon Dioxide (CO₂).");
+//            }
+//        });
+//
+//        questionPanel.add(questionLabel);
+//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+//        questionPanel.add(option1);
+//        questionPanel.add(option2);
+//        questionPanel.add(option3);
+//        questionPanel.add(option4);
+//        questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+//        questionPanel.add(submitButton);
+//
+//        quizContentPanel.add(quizInstructionsLabel);
+//        quizContentPanel.add(questionPanel);
+//
+//        JScrollPane scrollPane = new JScrollPane(quizContentPanel);
+//        scrollPane.setBorder(BorderFactory.createTitledBorder("Questions"));
+//
+//        quizPanel.add(headerPanel, BorderLayout.NORTH);
+//        quizPanel.add(scrollPane, BorderLayout.CENTER);
+//
+//        mainPanel.add(quizPanel, "quiz");
+//    }
 
     private void createProfileEditPanel() {
         getContentPane().remove(scrollPane);
@@ -1109,28 +1143,25 @@ public class EcoSparkApp extends JFrame {
         profileEditPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         profileEditPanel.setBackground(Color.WHITE);
 
-        // Title
         JLabel titleLabel = new JLabel("Edit Your Profile");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(UIConstants.SUBHEADER_FONT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Current profile info display
         JPanel infoPanel = new JPanel(new GridLayout(3, 2, 10, 15));
         infoPanel.setBackground(Color.WHITE);
         infoPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
         infoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         infoPanel.setMaximumSize(new Dimension(500, 150));
 
-        // Name field
         JLabel nameLabel = new JLabel("Name:");
+        nameLabel.setFont(UIConstants.BUTTON_FONT);
         JTextField nameField = new JTextField(currentUser.getName());
 
-        // Email field (read-only)
         JLabel emailLabel = new JLabel("Email:");
+        emailLabel.setFont(UIConstants.BUTTON_FONT);
         JTextField emailField = new JTextField(currentUser.getEmail());
-        emailField.setEditable(false);  // Email shouldn't be changed
+        emailField.setEditable(false);
 
-        // Password field
         JLabel passwordLabel = new JLabel("New Password:");
         JPasswordField passwordField = new JPasswordField();
 
@@ -1141,17 +1172,15 @@ public class EcoSparkApp extends JFrame {
         infoPanel.add(passwordLabel);
         infoPanel.add(passwordField);
 
-        // Points display
         JPanel pointsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         pointsPanel.setBackground(Color.WHITE);
         pointsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel pointsLabel = new JLabel("Total Points: " + currentUser.getPoints());
-        pointsLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        pointsLabel.setForeground(new Color(33, 150, 83)); // Using the primaryColor from DashboardPanel
+        pointsLabel.setFont(UIConstants.SUBHEADER_FONT);
+        pointsLabel.setForeground(UIConstants.GREEN_CHECK);
         pointsPanel.add(pointsLabel);
 
-        // Completed Tasks Section
         JPanel tasksPanel = new JPanel();
         tasksPanel.setLayout(new BoxLayout(tasksPanel, BoxLayout.Y_AXIS));
         tasksPanel.setBackground(Color.WHITE);
@@ -1160,22 +1189,20 @@ public class EcoSparkApp extends JFrame {
                 "Completed Tasks",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
-                new Font("Arial", Font.BOLD, 14)
+                UIConstants.BUTTON_FONT
         ));
         tasksPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         tasksPanel.setMaximumSize(new Dimension(600, 250));
 
-        // Create a panel to hold the task items
         JPanel taskListPanel = new JPanel();
         taskListPanel.setLayout(new BoxLayout(taskListPanel, BoxLayout.Y_AXIS));
         taskListPanel.setBackground(Color.WHITE);
 
-        // Add completed tasks
         List<Task> completedTasks = currentUser.getCompletedTasks();
         if (completedTasks.isEmpty()) {
             JLabel noTasksLabel = new JLabel("No tasks completed yet");
             noTasksLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            noTasksLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+            noTasksLabel.setFont(UIConstants.BUTTON_FONT);
             taskListPanel.add(noTasksLabel);
         } else {
             for (Task task : completedTasks) {
@@ -1193,7 +1220,6 @@ public class EcoSparkApp extends JFrame {
 
         tasksPanel.add(taskScrollPane);
 
-        // Badges Section
         JPanel badgesPanel = new JPanel();
         badgesPanel.setLayout(new BoxLayout(badgesPanel, BoxLayout.Y_AXIS));
         badgesPanel.setBackground(Color.WHITE);
@@ -1202,21 +1228,19 @@ public class EcoSparkApp extends JFrame {
                 "Your Badges",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
-                new Font("Arial", Font.BOLD, 14)
+                UIConstants.BUTTON_FONT
         ));
         badgesPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         badgesPanel.setMaximumSize(new Dimension(600, 250));
 
-        // Create a panel to display badges in a grid
         JPanel badgeGridPanel = new JPanel(new GridLayout(0, 4, 10, 10));
         badgeGridPanel.setBackground(Color.WHITE);
 
-        // Add badges
         List<String> userBadges = currentUser.getBadges();
         if (userBadges.isEmpty()) {
             JLabel noBadgesLabel = new JLabel("No badges earned yet");
             noBadgesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            noBadgesLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+            noBadgesLabel.setFont(UIConstants.BUTTON_FONT);
             badgeGridPanel.add(noBadgesLabel);
         } else {
             for (String badgeName : userBadges) {
@@ -1232,22 +1256,15 @@ public class EcoSparkApp extends JFrame {
         badgeScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         badgesPanel.add(badgeScrollPane);
-
-        // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
-
         JButton saveButton = new JButton("Save Changes");
         JButton cancelButton = new JButton("Cancel");
-
         buttonPanel.add(saveButton);
         buttonPanel.add(cancelButton);
-
-        // Status label
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Add components to panel
         profileEditPanel.add(titleLabel);
         profileEditPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         profileEditPanel.add(infoPanel);
@@ -1262,7 +1279,6 @@ public class EcoSparkApp extends JFrame {
         profileEditPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         profileEditPanel.add(statusLabel);
 
-        // Save button action
         saveButton.addActionListener(e -> {
             String newName = nameField.getText();
             String newPassword = new String(passwordField.getPassword());
@@ -1272,8 +1288,6 @@ public class EcoSparkApp extends JFrame {
                 statusLabel.setForeground(Color.RED);
                 return;
             }
-
-            // Update user info
             currentUser.setName(newName);
             userNames.put(currentUser.getEmail(), newName);
 
@@ -1285,19 +1299,15 @@ public class EcoSparkApp extends JFrame {
             statusLabel.setText("Profile updated successfully!");
             statusLabel.setForeground(Color.GREEN);
 
-            // Return to main screen after a delay
-            Timer timer = new Timer(1500, event -> {
+            Timer timer = new Timer(1000, event -> {
                 getContentPane().remove(profileEditPanel);
                 getContentPane().add(scrollPane);
-
-                // Refresh hero section to show updated name
                 mainPanel.removeAll();
                 createNavBar();
                 createHeroSection();
                 createOfferSection();
                 createAboutSection();
                 createFooterSection();
-
                 revalidate();
                 repaint();
             });
@@ -1305,7 +1315,6 @@ public class EcoSparkApp extends JFrame {
             timer.start();
         });
 
-        // Cancel button action
         cancelButton.addActionListener(e -> {
             getContentPane().remove(profileEditPanel);
             getContentPane().add(scrollPane);
@@ -1318,7 +1327,6 @@ public class EcoSparkApp extends JFrame {
         repaint();
     }
 
-    // Helper method to create a task list item
     private JPanel createTaskListItem(Task task) {
         JPanel taskItem = new JPanel(new BorderLayout(10, 0));
         taskItem.setBackground(Color.WHITE);
@@ -1328,41 +1336,32 @@ public class EcoSparkApp extends JFrame {
         ));
         taskItem.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
-        // Create icon based on task type
         JPanel iconPanel = createColorfulTaskIcon(task.getType());
 
-        // Task details
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         detailsPanel.setBackground(Color.WHITE);
-
         JLabel titleLabel = new JLabel(task.getTitle());
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
+        titleLabel.setFont(UIConstants.BUTTON_FONT);
         JLabel pointsLabel = new JLabel("+" + task.getPointsValue() + " pts");
-        pointsLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        pointsLabel.setFont(UIConstants.BUTTON_FONT);
         pointsLabel.setForeground(new Color(33, 150, 83));
-
         detailsPanel.add(titleLabel);
         detailsPanel.add(Box.createRigidArea(new Dimension(0, 3)));
         detailsPanel.add(pointsLabel);
-
         taskItem.add(iconPanel, BorderLayout.WEST);
         taskItem.add(detailsPanel, BorderLayout.CENTER);
 
         return taskItem;
     }
 
-    // Helper method to create a badge item
     private JPanel createBadgeItem(String badgeName) {
         Color badgeColor = getBadgeColor(badgeName);
         String badgeIcon = getBadgeIcon(badgeName);
-
         JPanel badgePanel = new JPanel();
         badgePanel.setLayout(new BoxLayout(badgePanel, BoxLayout.Y_AXIS));
         badgePanel.setBackground(Color.WHITE);
 
-        // Create rounded badge icon
         JPanel iconPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1386,7 +1385,7 @@ public class EcoSparkApp extends JFrame {
         iconPanel.add(iconLabel);
 
         JLabel nameLabel = new JLabel(badgeName, JLabel.CENTER);
-        nameLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        nameLabel.setFont(UIConstants.BUTTON_FONT);
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         badgePanel.add(iconPanel);
@@ -1396,14 +1395,11 @@ public class EcoSparkApp extends JFrame {
         return badgePanel;
     }
 
-    // Helper method to create colorful task icon similar to DashboardPanel
     private JPanel createColorfulTaskIcon(String taskType) {
         JPanel iconPanel = new JPanel();
         iconPanel.setPreferredSize(new Dimension(40, 40));
         iconPanel.setMaximumSize(new Dimension(40, 40));
         iconPanel.setMinimumSize(new Dimension(40, 40));
-
-        // Determine color and icon based on task type
         Color bgColor;
         String iconText;
 
@@ -1447,11 +1443,9 @@ public class EcoSparkApp extends JFrame {
                 break;
         }
 
-        // Final color and icon
         final Color finalBgColor = bgColor;
         final String finalIconText = iconText;
 
-        // Create rounded panel with icon
         JPanel colorPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1466,18 +1460,14 @@ public class EcoSparkApp extends JFrame {
         colorPanel.setLayout(new GridBagLayout());
 
         JLabel iconLabel = new JLabel(finalIconText);
-        iconLabel.setFont(new Font("Dialog", Font.PLAIN, 18));
+        iconLabel.setFont(UIConstants.BUTTON_FONT);
         colorPanel.add(iconLabel);
-
         iconPanel.setLayout(new BorderLayout());
         iconPanel.add(colorPanel, BorderLayout.CENTER);
-
         return iconPanel;
     }
 
-    // Helper method to get badge color
     private Color getBadgeColor(String badgeName) {
-        // This matches the badge colors from the DashboardPanel
         switch (badgeName.toLowerCase()) {
             case "novice":
                 return new Color(173, 216, 230);
@@ -1514,7 +1504,6 @@ public class EcoSparkApp extends JFrame {
         }
     }
 
-    // Helper method to get badge icon
     private String getBadgeIcon(String badgeName) {
         // This matches the badge icons from the DashboardPanel
         switch (badgeName.toLowerCase()) {
@@ -1567,7 +1556,7 @@ public class EcoSparkApp extends JFrame {
             case "forest":
                 return "🌲";
             default:
-                return "🌱"; // Default icon for unknown badges
+                return "🌱";
         }
     }
 
@@ -1582,7 +1571,6 @@ public class EcoSparkApp extends JFrame {
         offerTitle.setFont(UIConstants.HEADER_FONT);
         offerTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Container for buttons (ensures proper spacing & centering)
         JPanel offerCards = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         offerCards.setBackground(Color.WHITE);
         offerCards.setMaximumSize(new Dimension(900, 835)); // Ensures centering
@@ -1592,44 +1580,44 @@ public class EcoSparkApp extends JFrame {
                 "Calculate carbon footprint",
                 e -> {
                     if (isUserLoggedIn()) {
-                        // User is logged in, proceed with the action
-                        JFrame dashboardFrame = new JFrame("Dashboard");
+                        JFrame dashboardFrame = new JFrame("🌲" + currentUser.getName() + "'s Dashboard 🌲");
                         dashboardFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                        dashboardFrame.setSize(800, 600); // Adjust size as needed
+                        dashboardFrame.setSize(1000, 1000);
 
-                        // Pass the model and currentUser to the DashboardPanel
                         DashboardPanel dashboardPanel = new DashboardPanel(model, currentUser);
                         dashboardFrame.add(dashboardPanel);
-
-                        dashboardFrame.setLocationRelativeTo(null); // Center the window
+                        dashboardFrame.setLocationRelativeTo(null);
                         dashboardFrame.setVisible(true);
                     } else {
-                        // User is not logged in, show a login prompt
                         JOptionPane.showMessageDialog(null,
                                 "Please log in to calculate your carbon footprint.",
                                 "Login Required",
                                 JOptionPane.INFORMATION_MESSAGE);
-                        createLoginPanel();
                     }
                 }
         );
 
-
         JPanel quizButton = createImageButton(
                 "/com/hillcrest/visuals/informative_resources_button_graphic.png",
                 "Test your knowledge",
-                e -> System.out.println("Informative Resources clicked!")
-        );
+                e -> {
+                    quizPanel = createQuizPanel();
+                    quizFrame = new JFrame("EcoSpark Quiz");
+                    quizFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    quizFrame.setSize(600, 400);
+                    quizFrame.setLayout(new BorderLayout());
+                    quizFrame.add(quizPanel, BorderLayout.CENTER);
+                    quizFrame.setLocationRelativeTo(null);
+                    quizFrame.setVisible(true);
+                });
 
         JPanel actionsButton = createImageButton(
                 "/com/hillcrest/visuals/take_action.png",
                 "Take personalized actions",
                 e -> {
                     if (isUserLoggedIn()) {
-                        // User is logged in, show profile edit panel
                         createCarbonFootprintPanel();
                     } else {
-                        // User is not logged in, redirect to login
                         JOptionPane.showMessageDialog(this,
                                 "Please log in to view your profile",
                                 "Login Required",
@@ -1638,26 +1626,22 @@ public class EcoSparkApp extends JFrame {
                 }
         );
 
-        // Add buttons to the panel
         offerCards.add(carbonFootprintButton);
         offerCards.add(quizButton);
         offerCards.add(actionsButton);
-
         offerPanel.add(offerTitle);
         offerPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Spacing
         offerPanel.add(offerCards);
-
         mainPanel.add(offerPanel);
     }
 
-    // Helper method to create an image button
-    private JPanel createImageButton(String imagePath, String title, ActionListener action) {
-        // Create a panel to hold the button and title
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout()); // Use BorderLayout to easily position components
-        panel.setBackground(Color.WHITE); // Set the background color to white
 
-        // Create the button with the image
+
+    private JPanel createImageButton(String imagePath, String title, ActionListener action) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+
         JButton button = new JButton();
         button.setFocusPainted(false);
         button.setBorderPainted(false);
@@ -1667,152 +1651,25 @@ public class EcoSparkApp extends JFrame {
         try {
             ImageIcon originalIcon = new ImageIcon(getClass().getResource(imagePath));
             Image originalImage = originalIcon.getImage();
-
-            // Calculate the scaled width and height while maintaining aspect ratio
             int originalWidth = originalImage.getWidth(null);
             int originalHeight = originalImage.getHeight(null);
-
-            // Calculate new dimensions based on max width or height (in this case 200px)
             int newWidth = 200;
             int newHeight = (int) ((double) originalHeight / originalWidth * newWidth);
-
-            // Scale the image while maintaining aspect ratio
             ImageIcon icon = new ImageIcon(originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_AREA_AVERAGING));
             button.setIcon(icon);
         } catch (Exception e) {
-            System.err.println("Image not found: " + imagePath);
+            System.err.println("Image not found.");
         }
 
         button.addActionListener(action);
 
-        // Create a label for the title
-        JLabel titleLabel = new JLabel(title, JLabel.CENTER); // Title centered below the image
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14)); // Set title font style and size
-        titleLabel.setPreferredSize(new Dimension(250, 30)); // Set label size to fit title
-
-        // Add button and title to the panel
+        JLabel titleLabel = new JLabel(title, JLabel.CENTER);
+        titleLabel.setFont(UIConstants.BUTTON_FONT);
+        titleLabel.setPreferredSize(new Dimension(250, 30));
         panel.add(button, BorderLayout.CENTER);
         panel.add(titleLabel, BorderLayout.SOUTH);
 
         return panel;
-    }
-
-    private JPanel createOfferCard(String title, String imagePath, Color backgroundColor) {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(backgroundColor);
-        card.setPreferredSize(new Dimension(220, 270));
-        card.setMaximumSize(new Dimension(220, 270));
-
-        JPanel imageContainer = new JPanel();
-        imageContainer.setBackground(backgroundColor);
-        imageContainer.setAlignmentX(Component.CENTER_ALIGNMENT);
-        imageContainer.setPreferredSize(new Dimension(200, 200));
-        imageContainer.setMaximumSize(new Dimension(200, 200));
-
-        JLabel imageLabel = new JLabel();
-        try {
-            if (imagePath != null) {
-                ImageIcon cardImage = new ImageIcon(new ImageIcon(getClass().getResource(imagePath))
-                        .getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH));
-                imageLabel.setIcon(cardImage);
-            } else if (title.equals("Informative Resources")) {
-                // We need to create a placeholder for earth in hands
-                // In a real app, you would have an image for this
-                imageLabel.setText("Earth Image");
-                imageLabel.setForeground(UIConstants.PRIMARY_COLOR);
-                imageLabel.setFont(UIConstants.BODY_FONT);
-                imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                imageLabel.setPreferredSize(new Dimension(150, 150));
-            }
-        } catch (Exception e) {
-            imageLabel.setText(title + " Icon");
-            imageLabel.setForeground(backgroundColor.equals(UIConstants.PRIMARY_COLOR) ? Color.WHITE : UIConstants.PRIMARY_COLOR);
-            imageLabel.setFont(UIConstants.BODY_FONT);
-            imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            imageLabel.setPreferredSize(new Dimension(150, 150));
-        }
-
-        imageContainer.add(imageLabel);
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        titleLabel.setForeground(backgroundColor.equals(UIConstants.PRIMARY_COLOR) ? Color.WHITE : UIConstants.TEXT_COLOR);
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setBorder(new EmptyBorder(20, 0, 0, 0));
-
-        card.add(Box.createVerticalGlue());
-        card.add(imageContainer);
-        card.add(titleLabel);
-        card.add(Box.createVerticalGlue());
-
-        return card;
-    }
-
-    private JPanel createOfferCardButton(String title, String imagePath, Color backgroundColor) {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(backgroundColor);
-        card.setPreferredSize(new Dimension(220, 270));
-        card.setMaximumSize(new Dimension(220, 270));
-        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Change cursor to hand when hovering
-
-        // Make the entire card clickable
-        card.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (title.equals("Personalized Actions")) {
-                    cardLayout.show(mainPanel, "tasks");
-                } else if (title.equals("Carbon Footprint Calculator")) {
-                    // Navigate to the carbon footprint panel (if implemented)
-                    System.out.println("Carbon Footprint Calculator clicked");
-                }
-            }
-
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                card.setBackground(backgroundColor.darker());
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                card.setBackground(backgroundColor);
-            }
-        });
-
-        JPanel imageContainer = new JPanel();
-        imageContainer.setBackground(backgroundColor);
-        imageContainer.setAlignmentX(Component.CENTER_ALIGNMENT);
-        imageContainer.setPreferredSize(new Dimension(200, 200));
-        imageContainer.setMaximumSize(new Dimension(200, 200));
-        imageContainer.setOpaque(false); // Make it transparent to show the panel's background color
-
-        JLabel imageLabel = new JLabel();
-        try {
-            if (imagePath != null) {
-                ImageIcon cardImage = new ImageIcon(new ImageIcon(getClass().getResource(imagePath))
-                        .getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH));
-                imageLabel.setIcon(cardImage);
-            }
-        } catch (Exception e) {
-            imageLabel.setText(title + " Icon");
-            imageLabel.setForeground(Color.WHITE);
-            imageLabel.setFont(UIConstants.BODY_FONT);
-            imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            imageLabel.setPreferredSize(new Dimension(150, 150));
-        }
-
-        imageContainer.add(imageLabel);
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setBorder(new EmptyBorder(20, 0, 0, 0));
-
-        card.add(Box.createVerticalGlue());
-        card.add(imageContainer);
-        card.add(titleLabel);
-        card.add(Box.createVerticalGlue());
-
-        return card;
     }
 
     private void createAboutSection() {
@@ -1822,14 +1679,13 @@ public class EcoSparkApp extends JFrame {
         aboutPanel.setBorder(new EmptyBorder(40, 40, 40, 40));
         aboutPanel.setMaximumSize(new Dimension(800, 400));
 
-        // Text section
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setBackground(Color.WHITE);
         textPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
-        JLabel learnMore = new JLabel("LEARN MORE");
-        learnMore.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel learnMore = new JLabel("Learn more");
+        learnMore.setFont(UIConstants.BUTTON_FONT);
         learnMore.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel titlePanel = new JPanel();
@@ -1837,7 +1693,7 @@ public class EcoSparkApp extends JFrame {
         titlePanel.setBackground(Color.WHITE);
         titlePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel aboutLabel = new JLabel("About ");
+        JLabel aboutLabel = new JLabel("About");
         aboutLabel.setFont(UIConstants.HEADER_FONT);
 
         JLabel ecospark = new JLabel("EcoSpark");
@@ -1878,7 +1734,6 @@ public class EcoSparkApp extends JFrame {
         textPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         textPanel.add(aboutText3);
 
-        // Image section
         JPanel imagePanel = new JPanel();
         imagePanel.setBackground(UIConstants.PRIMARY_COLOR);
         imagePanel.setPreferredSize(new Dimension(250, 250));
@@ -1897,11 +1752,9 @@ public class EcoSparkApp extends JFrame {
         }
 
         imagePanel.add(imageLabel);
-
         aboutPanel.add(textPanel);
         aboutPanel.add(Box.createHorizontalGlue());
         aboutPanel.add(imagePanel);
-
         mainPanel.add(aboutPanel);
     }
 
@@ -1934,7 +1787,6 @@ public class EcoSparkApp extends JFrame {
         contentPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         contentPanel.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        // Contact information
         JPanel contactPanel = new JPanel();
         contactPanel.setLayout(new BoxLayout(contactPanel, BoxLayout.Y_AXIS));
         contactPanel.setBackground(Color.WHITE);
@@ -1961,7 +1813,6 @@ public class EcoSparkApp extends JFrame {
         contactPanel.add(inquiriesLabel);
         contactPanel.add(phoneLabel);
 
-        // Quick links
         JPanel linksPanel = new JPanel();
         linksPanel.setLayout(new BoxLayout(linksPanel, BoxLayout.Y_AXIS));
         linksPanel.setBackground(Color.WHITE);
@@ -1983,40 +1834,16 @@ public class EcoSparkApp extends JFrame {
             linksPanel.add(link);
         }
 
-        // Social Media Icons
         JPanel socialPanel = new JPanel();
         socialPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         socialPanel.setBackground(Color.WHITE);
-
-        String[] socialIcons = {"facebook", "instagram", "linkedin"};
-        for (String social : socialIcons) {
-            ImageIcon icon = new ImageIcon( "/src/facebook.png");
-            JButton socialButton = new JButton(icon);
-
-            socialButton.setFocusPainted(false);
-            socialButton.setContentAreaFilled(false);
-            socialButton.setBorderPainted(false);
-            socialButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-            socialPanel.add(socialButton);
-        }
 
         contentPanel.add(contactPanel);
         contentPanel.add(linksPanel);
         contentPanel.add(Box.createHorizontalGlue());
         contentPanel.add(socialPanel);
-
-        // Copyright
-        JPanel copyrightPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        copyrightPanel.setBackground(Color.WHITE);
-
-        JLabel copyrightLabel = new JLabel("© 2025 EcoSpark. All rights reserved.");
-        copyrightLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        copyrightPanel.add(copyrightLabel);
-
         footerPanel.add(separator);
         footerPanel.add(contentPanel);
-        footerPanel.add(copyrightPanel);
 
         mainPanel.add(footerPanel);
     }

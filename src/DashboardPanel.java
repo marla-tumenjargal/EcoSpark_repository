@@ -31,61 +31,23 @@ public class DashboardPanel extends JPanel {
         initializeBadges();
         setLayout(new BorderLayout());
 
-        add(createHeaderPanel(), BorderLayout.NORTH);
-
         contentCardLayout = new CardLayout();
         contentPanel = new JPanel(contentCardLayout);
-
         JPanel dashboardContent = createDashboardContent();
         contentPanel.add(dashboardContent, "dashboard");
-
         add(contentPanel, BorderLayout.CENTER);
-    }
-
-    private JPanel createHeaderPanel() {
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-        // App logo/name
-        JLabel logoLabel = new JLabel("EcoSpark");
-        logoLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        logoLabel.setForeground(primaryColor);
-
-        // User profile icon and points display
-        JPanel profilePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        profilePanel.setBackground(Color.WHITE);
-
-        JLabel pointsLabel = new JLabel(currentUser.getPoints() + " pts");
-        pointsLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        pointsLabel.setForeground(primaryColor);
-
-        JButton profileButton = new JButton("Profile");
-        profileButton.setFocusPainted(false);
-        profileButton.setBorderPainted(false);
-        profileButton.setContentAreaFilled(false);
-        profileButton.setFont(new Font("Arial", Font.PLAIN, 14));
-
-        profilePanel.add(pointsLabel);
-        profilePanel.add(profileButton);
-
-        headerPanel.add(logoLabel, BorderLayout.WEST);
-        headerPanel.add(profilePanel, BorderLayout.EAST);
-
-        return headerPanel;
     }
 
     private JPanel createDashboardContent() {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
 
-        // Dashboard title
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBackground(Color.WHITE);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
 
-        JLabel titleLabel = new JLabel("My Dashboard");
+        JLabel titleLabel = new JLabel(currentUser.getName() + "'s Dashboard");
+
         titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
         titlePanel.add(titleLabel, BorderLayout.WEST);
 
