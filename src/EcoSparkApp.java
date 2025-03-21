@@ -565,7 +565,7 @@ public class EcoSparkApp extends JFrame {
         carbonScrollPane.setBackground(Color.WHITE);
 
         submitButton.addActionListener(e -> {
-            if (validateAllFieldsFilled()) {
+            if (validateInputs()) {
                 calculateAndDisplayResults(resultsPanel);
             } else {
                 JOptionPane.showMessageDialog(this,
@@ -579,12 +579,41 @@ public class EcoSparkApp extends JFrame {
         setVisible(true);
     }
 
-    private boolean validateAllFieldsFilled() {
+    /**
+     * Validates that all required fields are filled and no negative values are entered.
+     * @return true if all validations pass, false otherwise
+     */
+    private boolean validateInputs() {
+        // First check if all fields are filled
         for (Map.Entry<String, JComponent> entry : formFields.entrySet()) {
             if (entry.getValue() instanceof JTextField) {
                 JTextField textField = (JTextField) entry.getValue();
-                if (textField.getText().trim().isEmpty()) {
+                String text = textField.getText().trim();
+
+                // Check if field is empty
+                if (text.isEmpty()) {
                     return false;
+                }
+
+                // For numeric fields, check if the value is negative
+                String fieldName = entry.getKey();
+                if (isNumericField(fieldName)) {
+                    try {
+                        double value = Double.parseDouble(text);
+                        if (value < 0) {
+                            JOptionPane.showMessageDialog(this,
+                                    "Negative values are not allowed: " + fieldName,
+                                    "Invalid Input",
+                                    JOptionPane.ERROR_MESSAGE);
+                            return false;
+                        }
+                    } catch (NumberFormatException e) {
+                        JOptionPane.showMessageDialog(this,
+                                "Please enter a valid number for: " + fieldName,
+                                "Invalid Input",
+                                JOptionPane.ERROR_MESSAGE);
+                        return false;
+                    }
                 }
             } else if (entry.getValue() instanceof JComboBox) {
                 JComboBox<?> comboBox = (JComboBox<?>) entry.getValue();
@@ -594,6 +623,26 @@ public class EcoSparkApp extends JFrame {
             }
         }
         return true;
+    }
+
+    /**
+     * Determines if a field should contain numeric values.
+     * @param fieldName The name of the field
+     * @return true if the field should contain a numeric value
+     */
+    private boolean isNumericField(String fieldName) {
+        // List of fields that should contain numeric values
+        return fieldName.equals("carMilesPerWeek") ||
+                fieldName.equals("mpg") ||
+                fieldName.equals("flightsPerYear") ||
+                fieldName.equals("transitMiles") ||
+                fieldName.equals("meatConsumption") ||
+                fieldName.equals("dairyConsumption") ||
+                fieldName.equals("electricityUsage") ||
+                fieldName.equals("gasUsage") ||
+                fieldName.equals("wasteProduced") ||
+                fieldName.equals("disposableItems") ||
+                fieldName.equals("squareFootage");
     }
 
     /**
@@ -1435,7 +1484,7 @@ public class EcoSparkApp extends JFrame {
         revalidate();
         repaint();
     }
-    
+
     private JPanel createTaskListItem(Task task) {
         JPanel taskItem = new JPanel(new BorderLayout(10, 0));
         taskItem.setBackground(Color.WHITE);
