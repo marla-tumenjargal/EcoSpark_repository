@@ -1,6 +1,11 @@
 import java.util.*;
 import java.util.List;
 
+/**
+ * The QuizBackend class manages the logic for the quiz application.
+ * It is the backend logic.
+ * Loads questions, tracks user performance, and provides quiz functionality.
+ */
 public class QuizBackend {
     private List<Map<String, Object>> allQuestions;
     private Queue<Map<String, Object>> quizQuestions;
@@ -8,6 +13,9 @@ public class QuizBackend {
     private Map<String, int[]> categoryPerformance;
     private static final int QUESTIONS_PER_QUIZ = 20;
 
+    /**
+     * Constructor, constructs new QuizBackend object
+     */
     public QuizBackend() {
         allQuestions = new ArrayList<>();
         quizQuestions = new LinkedList<>();
@@ -17,6 +25,9 @@ public class QuizBackend {
         selectRandomQuestions();
     }
 
+    /**
+     * Loads all questions into the quiz system.
+     */
     private void loadAllQuestions() {
         allQuestions.add(createQuestion(
                 "What is the primary cause of global warming?",
@@ -537,6 +548,15 @@ public class QuizBackend {
         ));
     }
 
+    /**
+     * Creates a question with the given text, options, correct answer, and category.
+     *
+     * @param questionText  Text of the question.
+     * @param options  List of answer options.
+     * @param correctAnswer Correct answer.
+     * @param category The category of the question.
+     * @return A map representing the question.
+     */
     private Map<String, Object> createQuestion(String questionText, List<String> options, String correctAnswer, String category) {
         Map<String, Object> question = new HashMap<>();
         question.put("questionText", questionText);
@@ -546,23 +566,26 @@ public class QuizBackend {
         return question;
     }
 
-    // Randomly selects questions for the quiz
+    /**
+     * Randomly selects questions for the quiz.
+     */
     private void selectRandomQuestions() {
         List<Map<String, Object>> questionPool = new ArrayList<>(allQuestions);
-        Collections.shuffle(questionPool); // Shuffle for randomness
+        Collections.shuffle(questionPool); // SHUFFLES HERE!!
         quizQuestions.clear();
-
-        // Add the first `QUESTIONS_PER_QUIZ` questions to the quiz
         for (int i = 0; i < QUESTIONS_PER_QUIZ && i < questionPool.size(); i++) {
             quizQuestions.add(questionPool.get(i));
         }
     }
-
-    // Returns the current question
     public Map<String, Object> getCurrentQuestion() {
         return quizQuestions.peek();
     }
 
+    /**
+     * Checks if the provided answer is correct and updates the score.
+     * @param answer User's answer.
+     * @return True if the answer is correct, false otherwise.
+     */
     public boolean checkAnswer(String answer) {
         Map<String, Object> currentQuestion = quizQuestions.poll();
         String correctAnswer = (String) currentQuestion.get("correctAnswer");
@@ -572,14 +595,14 @@ public class QuizBackend {
         if (isCorrect) {
             score++;
         }
-
-        // Make sure to update category performance
         updateCategoryPerformance(category, isCorrect);
-
         return isCorrect;
     }
-
-    // Updates performance metrics for a specific category
+    /**
+     * Updates performance stufff.
+     * @param category  The category of the question.
+     * @param isCorrect Whether the answer was correct.
+     */
     private void updateCategoryPerformance(String category, boolean isCorrect) {
         int[] performance = categoryPerformance.getOrDefault(category, new int[2]); // [correct, total]
         if (isCorrect) {
@@ -589,36 +612,27 @@ public class QuizBackend {
         categoryPerformance.put(category, performance);
     }
 
+    /**
+     * Checks if there are more questions in the quiz.
+     * @return True if there are more questions, false otherwise.
+     */
     public boolean hasMoreQuestions() {
         return !quizQuestions.isEmpty();
     }
 
+    /**
+     * Returns the user's current score.
+     * @return The current score.
+     */
     public int getScore() {
         return score;
     }
 
+    /**
+     * Getter, gets the number of questions (20!)
+     * @return
+     */
     public int getTotalQuestions() {
         return QUESTIONS_PER_QUIZ;
-    }
-
-    public int getCurrentQuestionNumber() {
-        return QUESTIONS_PER_QUIZ - quizQuestions.size();
-    }
-
-    public String getCurrentCategory() {
-        return quizQuestions.isEmpty() ? "" : (String) quizQuestions.peek().get("category");
-    }
-
-    public Map<String, Double> getCategoryPerformance() {
-        Map<String, Double> performance = new HashMap<>();
-        for (Map.Entry<String, int[]> entry : categoryPerformance.entrySet()) {
-            String category = entry.getKey();
-            int correct = entry.getValue()[0];
-            int total = entry.getValue()[1];
-            if (total > 0) {
-                performance.put(category, (double) correct / total);
-            }
-        }
-        return performance;
     }
 }

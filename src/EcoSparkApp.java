@@ -9,6 +9,11 @@ import java.util.List;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.plaf.basic.BasicButtonUI;
 
+/**
+ * EcoSparkApp is the main application for the whole platform.
+ * Manages input and output, as well as the buttons for calculating carbon footprints,
+ * taking quizzes, and tracking user progress.
+ */
 public class EcoSparkApp extends JFrame {
     private ApplicationModel model;
     private Profile currentUser;
@@ -27,6 +32,10 @@ public class EcoSparkApp extends JFrame {
 
     CarbonFootprintCalculator calculator = new CarbonFootprintCalculator();
 
+    /**
+     * Main method
+     * @param args Command-line stuff
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -35,6 +44,9 @@ public class EcoSparkApp extends JFrame {
         });
     }
 
+    /**
+     * Constructs the EcoSparkApp window and initializes its components.
+     */
     public EcoSparkApp() {
         model = new ApplicationModel();
         userManager = new UserManager();
@@ -71,6 +83,9 @@ public class EcoSparkApp extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Creates the login panel for user authentication.
+     */
     private void createLoginPanel() {
         getContentPane().remove(scrollPane);
 
@@ -158,6 +173,9 @@ public class EcoSparkApp extends JFrame {
         repaint();
     }
 
+    /**
+     * Creates the registration panel for new users.
+     */
     private void createRegisterPanel() {
         getContentPane().remove(scrollPane);
 
@@ -266,6 +284,10 @@ public class EcoSparkApp extends JFrame {
         super.dispose();
     }
 
+    /**
+     * Creates the quiz panel for users.
+     * @return quiz panel.
+     */
     public JPanel createQuizPanel() {
         quizPanel = new JPanel() {
             @Override
@@ -406,6 +428,9 @@ public class EcoSparkApp extends JFrame {
         return quizPanel;
     }
 
+    /**
+     * Loads the next question in the quiz.
+     */
     private void loadQuestion() {
         if (backend.hasMoreQuestions()) {
             for (JButton button : optionButtons) {
@@ -434,6 +459,9 @@ public class EcoSparkApp extends JFrame {
         }
     }
 
+    /**
+     * Displays the quiz results after completion.
+     */
     private void showResults() {
         StringBuilder results = new StringBuilder();
         results.append("Quiz Over! Your Score: ").append(backend.getScore()).append(" / ").append(backend.getTotalQuestions()).append("\n\n");
@@ -463,10 +491,17 @@ public class EcoSparkApp extends JFrame {
         }
     }
 
+    /**
+     * Checks if the user is logged in.
+     * @return True if the user is logged in, false otherwise.
+     */
     private boolean isUserLoggedIn() {
         return currentUser != null;
     }
 
+    /**
+     * Creates the carbon footprint calculation panel.
+     */
     private void createCarbonFootprintPanel() {
         getContentPane().remove(scrollPane);
 
@@ -561,6 +596,10 @@ public class EcoSparkApp extends JFrame {
         return true;
     }
 
+    /**
+     * Creates the general information panel for the carbon footprint calculator.
+     * @return The general information panel.
+     */
     private JPanel createInfoPanel() {
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
@@ -606,6 +645,10 @@ public class EcoSparkApp extends JFrame {
         return infoPanel;
     }
 
+    /**
+     * Creates the results panel for displaying carbon footprint calculations.
+     * @return The results panel.
+     */
     private JPanel createResultsPanel() {
         JPanel resultsPanel = new JPanel();
         resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
@@ -640,6 +683,10 @@ public class EcoSparkApp extends JFrame {
         return resultsPanel;
     }
 
+    /**
+     * Calculates and displays the carbon footprint results.
+     * @param resultsPanel The panel to display the results.
+     */
     private void calculateAndDisplayResults(JPanel resultsPanel) {
         Map<String, Object> inputValues = collectInputValues();
 
@@ -707,6 +754,10 @@ public class EcoSparkApp extends JFrame {
         repaint();
     }
 
+    /**
+     * collects inputs
+     * @return
+     */
     private Map<String, Object> collectInputValues() {
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, JComponent> entry : formFields.entrySet()) {
@@ -722,23 +773,33 @@ public class EcoSparkApp extends JFrame {
         return values;
     }
 
+    /**
+     * Gets color of the category(when outputting the results
+     * i tried picking primary colors! randomly thoo
+     * @param category
+     * @return
+     */
     private Color getCategoryColor(String category) {
         switch (category) {
             case "General Usage":
-                return new Color(65, 105, 225); // Royal Blue
+                return new Color(65, 105, 225);
             case "Transportation":
-                return new Color(220, 20, 60); // Crimson
+                return new Color(220, 20, 60);
             case "Food Consumption":
-                return new Color(34, 139, 34); // Forest Green
+                return new Color(34, 139, 34);
             case "Energy Usage":
-                return new Color(218, 165, 32); // Goldenrod
+                return new Color(218, 165, 32);
             case "Waste Production":
-                return new Color(41, 128, 185); // Steel Blue
+                return new Color(41, 128, 185);
             default:
                 return Color.LIGHT_GRAY;
         }
     }
 
+    /**
+     * Creates the general usage panel for the carbon footprint calculator.
+     * @return The general usage panel.
+     */
     private JPanel createGeneralPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -770,6 +831,10 @@ public class EcoSparkApp extends JFrame {
         return panel;
     }
 
+    /**
+     * Creates the transportation panel for the carbon footprint calculator.
+     * @return transportation panel.
+     */
     private JPanel createTransportationPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -795,6 +860,10 @@ public class EcoSparkApp extends JFrame {
         return panel;
     }
 
+    /**
+     * Creates the food consumption panel for the carbon footprint calculator.
+     * @return food consumption panel.
+     */
     private JPanel createFoodPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -824,6 +893,10 @@ public class EcoSparkApp extends JFrame {
         return panel;
     }
 
+    /**
+     * Creates the energy usage panel for the carbon footprint calculator.
+     * @return energy usage panel.
+     */
     private JPanel createEnergyPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -849,6 +922,10 @@ public class EcoSparkApp extends JFrame {
         return panel;
     }
 
+    /**
+     * Creates the waste and other panel for the carbon footprint calculator.
+     * @return waste and other panel.
+     */
     private JPanel createWastePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -878,12 +955,24 @@ public class EcoSparkApp extends JFrame {
         return panel;
     }
 
+    /**
+     * Creates a text field and registers it in the form fields map.
+     * @param fieldName  name of the field.
+     * @return created text field.
+     */
     private JTextField createAndRegisterTextField(String fieldName) {
         JTextField textField = new JTextField(10);
         formFields.put(fieldName, textField);
         return textField;
     }
 
+    /**
+     * Adds a form field with a sample text to panel.
+     * @param panel The panel to add the field to.
+     * @param labelText The label text for the field.
+     * @param inputComponent input component (e.g., text field or combo box).
+     * @param sampleText sample text to display.
+     */
     private void addFormFieldWithSample(JPanel panel, String labelText, JComponent inputComponent, String sampleText) {
         JPanel fieldPanel = new JPanel();
         fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.X_AXIS));
@@ -915,6 +1004,9 @@ public class EcoSparkApp extends JFrame {
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
     }
 
+    /**
+     * Creates the hero section of the application.
+     */
     private void createHeroSection() {
         JPanel heroPanel = new JPanel();
         heroPanel.setLayout(new BoxLayout(heroPanel, BoxLayout.X_AXIS));
@@ -1059,6 +1151,9 @@ public class EcoSparkApp extends JFrame {
         mainPanel.add(heroPanel);
     }
 
+    /**
+     * Creates the navigation bar for the application.
+     */
     private void createNavBar() {
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new BorderLayout());
@@ -1111,21 +1206,9 @@ public class EcoSparkApp extends JFrame {
         mainPanel.add(navContainer);
     }
 
-    private JPanel createIconPanel(Color bgColor, String iconText) {
-        JPanel iconPanel = new JPanel();
-        iconPanel.setPreferredSize(new Dimension(50, 50));
-        iconPanel.setBackground(bgColor);
-        iconPanel.setBorder(BorderFactory.createLineBorder(bgColor.darker(), 1));
-        iconPanel.setLayout(new BorderLayout());
-
-        JLabel icon = new JLabel(iconText);
-        icon.setHorizontalAlignment(SwingConstants.CENTER);
-        icon.setFont(new Font("Arial", Font.PLAIN, 18));
-
-        iconPanel.add(icon, BorderLayout.CENTER);
-        return iconPanel;
-    }
-
+    /**
+     * Creates the profile edit panel for the logged-in user.
+     */
     private void createProfileEditPanel() {
         getContentPane().remove(scrollPane);
 
@@ -1134,7 +1217,6 @@ public class EcoSparkApp extends JFrame {
         profileEditPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         profileEditPanel.setBackground(Color.WHITE);
 
-        // Title
         JLabel titleLabel = new JLabel("Edit Your Profile");
         titleLabel.setFont(UIConstants.SUBHEADER_FONT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -1353,7 +1435,7 @@ public class EcoSparkApp extends JFrame {
         revalidate();
         repaint();
     }
-
+    
     private JPanel createTaskListItem(Task task) {
         JPanel taskItem = new JPanel(new BorderLayout(10, 0));
         taskItem.setBackground(Color.WHITE);
